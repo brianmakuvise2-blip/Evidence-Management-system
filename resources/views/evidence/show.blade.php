@@ -2,6 +2,22 @@
 
 @section('content')
 <div class="container-fluid">
+    {{-- Deleted Evidence Notice --}}
+    @if($evidence->trashed())
+        <div class="alert alert-danger mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <div>
+                    <strong>This evidence has been deleted</strong>
+                    <p class="mb-0 mt-1">
+                        This evidence was permanently deleted on {{ $evidence->deleted_at->format('M j, Y \a\t g:i A') }}.
+                        The information below is for audit purposes only.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Header --}}
     <div class="row align-items-center mb-4">
         <div class="col">
@@ -18,10 +34,12 @@
             </div>
         </div>
         <div class="col-auto">
-            @if($evidence->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator'))
-                <a href="{{ route('evidence.edit', $evidence) }}" class="btn btn-outline-warning me-2">
-                    <i class="bi bi-pencil"></i> Edit
-                </a>
+            @if(!$evidence->trashed())
+                @if($evidence->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator'))
+                    <a href="{{ route('evidence.edit', $evidence) }}" class="btn btn-outline-warning me-2">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                @endif
             @endif
             <a href="{{ route('evidence.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back
@@ -229,7 +247,7 @@
         {{-- Sidebar --}}
         <div class="col-lg-4">
             {{-- Quick Actions Card --}}
-            @if(Auth::user()->hasAnyRole('administrator', 'system-administrator'))
+            @if(Auth::user()->hasAnyRole('administrator', 'system-administrator') && !$evidence->trashed())
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-light">
                         <h5 class="card-title mb-0">
@@ -306,7 +324,7 @@
 </div>
 
 {{-- Verify Evidence Modal --}}
-@if(Auth::user()->hasAnyRole('administrator', 'system-administrator'))
+@if(Auth::user()->hasAnyRole('administrator', 'system-administrator') && !$evidence->trashed())
     <div class="modal fade" id="verifyModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

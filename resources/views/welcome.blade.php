@@ -265,9 +265,9 @@
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
                 <li class="nav-item"><a href="#" class="nav-link active" aria-current="page">Dashboard</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Cases</a></li>
+                {{-- <li class="nav-item"><a href="#" class="nav-link">Cases</a></li>
                 <li class="nav-item"><a href="#" class="nav-link">Audit Trail</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Institutions</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">Institutions</a></li> --}}
                 <li class="nav-item ms-lg-2">
                     <a href="/login" class="btn btn-outline-light-custom"><i class="bi bi-box-arrow-in-right me-1"></i>Secure Login</a>
                 </li>
@@ -424,39 +424,51 @@
             <div class="section-divider"></div>
             <p class="text-secondary">Connecting key Zimbabwean institutions for seamless evidence collaboration</p>
         </div>
-        <div class="col-md-12">
-            <div class="row g-3 text-center mt-2">
-                <div class="col-md-3 col-6">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <i class="bi bi-bank fs-1" style="color:#1e6f5c;"></i>
-                        <h6 class="mt-2">Zimbabwe Republic Police</h6>
-                        <small>Investigation & seizure</small>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <i class="bi bi-gavel fs-1" style="color:#1e6f5c;"></i>
-                        <h6 class="mt-2">Judiciary of Zimbabwe</h6>
-                        <small>Court evidence management</small>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <i class="bi bi-file-earmark-spreadsheet fs-1" style="color:#1e6f5c;"></i>
-                        <h6 class="mt-2">National Prosecuting Authority</h6>
-                        <small>Case preparation & review</small>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <i class="bi bi-person-badge fs-1" style="color:#1e6f5c;"></i>
-                        <h6 class="mt-2">ZACC & Anti-Corruption</h6>
-                        <small>Forensic evidence tracking</small>
-                    </div>
-                </div>
+       <div class="col-md-12">
+    <div class="row g-3 text-center mt-2">
+
+        <div class="col-md-3 col-6">
+            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                <img src="{{ asset('images/zrp.jpg') }}" 
+                     class="img-fluid mb-2" 
+                     style="height:60px;">
+                <h6 class="mt-2">Zimbabwe Republic Police</h6>
+                <small>Investigation & seizure</small>
             </div>
         </div>
+
+        <div class="col-md-3 col-6">
+            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                <img src="{{ asset('images/dcy.jpg') }}" 
+                     class="img-fluid mb-2" 
+                     style="height:60px;">
+                <h6 class="mt-2">Judiciary of Zimbabwe</h6>
+                <small>Court evidence management</small>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                <img src="{{ asset('images/npa.jpg') }}" 
+                     class="img-fluid mb-2" 
+                     style="height:60px;">
+                <h6 class="mt-2">National Prosecuting Authority</h6>
+                <small>Case preparation & review</small>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                <img src="{{ asset('images/anticorruption.jpg') }}" 
+                     class="img-fluid mb-2" 
+                     style="height:60px;">
+                <h6 class="mt-2">ZACC & Anti-Corruption</h6>
+                <small>Forensic evidence tracking</small>
+            </div>
+        </div>
+
     </div>
+</div>
 
     <!-- CTA for system access and security assurance -->
     {{-- <div class="cta-section mb-5">
@@ -520,7 +532,7 @@
             </div>
         </div> --}}
     {{-- </div>
-</footer> --}} --}}
+</footer> --}} 
 
 <!-- Bootstrap JS Bundle for interactive components -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

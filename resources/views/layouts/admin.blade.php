@@ -150,6 +150,21 @@
             color: white;
         }
 
+        .nav-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nav-link.disabled:hover {
+            background: transparent;
+            color: var(--gray-700);
+        }
+
+        .nav-link.disabled:hover i {
+            color: var(--gray-400);
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -792,14 +807,14 @@
                     </div>
                     
                     <div class="nav-item">
-                        <a href="#" class="nav-link {{ Auth::user()->can('view-audit-logs') ? '' : 'disabled' }}">
+                        <a href="{{ Auth::user()->can('view-audit-logs') ? route('audit-logs.index') : '#' }}" class="nav-link {{ Auth::user()->can('view-audit-logs') ? '' : 'disabled' }}">
                             <i class="bi bi-journal-text"></i>
                             <span>Audit Logs</span>
                         </a>
                     </div>
                     
                     <div class="nav-item">
-                        <a href="#" class="nav-link {{ Auth::user()->can('manage-settings') ? '' : 'disabled' }}">
+                        <a href="{{ Auth::user()->can('manage-settings') ? route('settings.index') : '#' }}" class="nav-link {{ Auth::user()->can('manage-settings') ? '' : 'disabled' }}">
                             <i class="bi bi-gear"></i>
                             <span>Settings</span>
                         </a>
@@ -844,6 +859,21 @@
                                         <div class="notification-message small text-muted">
                                             {{ $notification->data['message'] ?? '' }}
                                         </div>
+
+                                        @if(isset($notification->data['hash_summary']))
+                                            <div class="mt-2 p-2 bg-light rounded small">
+                                                <strong>Evidence ID:</strong> {{ $notification->data['hash_summary']['evidence_id'] }}<br>
+                                                @if($notification->data['hash_summary']['file_updated'])
+                                                    <strong>File Updated:</strong> Yes<br>
+                                                    @if(isset($notification->data['hash_summary']['changes']['file']))
+                                                        <strong>Hash Change:</strong><br>
+                                                        <span class="text-danger">Old: {{ substr($notification->data['hash_summary']['changes']['file']['old_hash'], 0, 16) }}...</span><br>
+                                                        <span class="text-success">New: {{ substr($notification->data['hash_summary']['changes']['file']['new_hash'], 0, 16) }}...</span>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        @endif
+
                                         <div class="notification-time small text-muted">
                                             {{ $notification->created_at->diffForHumans() }}
                                         </div>
@@ -956,6 +986,251 @@
         });
     </script>
     
+    <script>
+        // Poll for notifications every 10 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            let lastUnreadCount = {{ Auth::user()->unreadNotifications->count() }};
+            
+            function updateNotifications() {
+                fetch('{{ route("notifications.unread") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const currentCount = data.unread_count;
+                    const badge = document.querySelector('.notification-badge .badge');
+                    if (badge) {
+                        badge.textContent = currentCount;
+                        if (currentCount > 0) {
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    
+                    // If new notifications, update the dropdown content and show toast
+                    if (currentCount > lastUnreadCount) {
+                        updateDropdown(data.notifications);
+                        showNotificationToast(data.notifications.filter(n => !n.read_at).slice(0, currentCount - lastUnreadCount));
+                    }
+                    
+                    lastUnreadCount = currentCount;
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+            }
+            
+            function updateDropdown(notifications) {
+                const dropdownMenu = document.querySelector('.notification-dropdown');
+                if (!dropdownMenu) return;
+                
+                // Find the divider and remove all notification items after it
+                const divider = dropdownMenu.querySelector('.dropdown-divider');
+                if (!divider) return;
+                
+                // Remove existing notification items
+                let nextSibling = divider.nextElementSibling;
+                while (nextSibling && !nextSibling.classList.contains('text-center')) {
+                    const temp = nextSibling.nextElementSibling;
+                    nextSibling.remove();
+                    nextSibling = temp;
+                }
+                
+                // Add new notifications before the "View All" link
+                const viewAllLink = dropdownMenu.querySelector('.text-center.py-2');
+                notifications.forEach(notification => {
+                    const item = document.createElement('div');
+                    item.className = 'notification-item ' + (notification.read_at ? 'read' : 'unread');
+                    item.innerHTML = `
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <div class="notification-title">${notification.title}</div>
+                                <div class="notification-message small text-muted">${notification.message}</div>
+                                ${notification.hash_summary ? `
+                                    <div class="mt-2 p-2 bg-light rounded small">
+                                        <strong>Evidence ID:</strong> ${notification.hash_summary.evidence_id}<br>
+                                        ${notification.hash_summary.file_updated ? `
+                                            <strong>File Updated:</strong> Yes<br>
+                                            ${notification.hash_summary.changes && notification.hash_summary.changes.file ? `
+                                                <strong>Hash Change:</strong><br>
+                                                <span class="text-danger">Old: ${notification.hash_summary.changes.file.old_hash.substring(0,16)}...</span><br>
+                                                <span class="text-success">New: ${notification.hash_summary.changes.file.new_hash.substring(0,16)}...</span>
+                                            ` : ''}
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
+                                <div class="notification-time small text-muted">${notification.created_at}</div>
+                            </div>
+                            ${!notification.read_at ? '<div class="notification-indicator"></div>' : ''}
+                        </div>
+                        ${notification.action_url ? `<div class="mt-2"><a href="${notification.action_url}" class="btn btn-sm btn-primary">View Details</a></div>` : ''}
+                        <div class="dropdown-divider"></div>
+                    `;
+                    dropdownMenu.insertBefore(item, viewAllLink);
+                });
+            }
+            
+            function showNotificationToast(newNotifications) {
+                if (newNotifications.length === 0) return;
+                
+                // Create a simple toast notification
+                const toastHtml = `
+                    <div class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-bell me-2"></i>
+                                You have ${newNotifications.length} new notification${newNotifications.length > 1 ? 's' : ''}!
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+                
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.innerHTML = toastHtml;
+                document.body.appendChild(toastContainer);
+                
+                const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+                toast.show();
+                
+                // Remove after shown
+                toastContainer.addEventListener('hidden.bs.toast', () => {
+                    toastContainer.remove();
+                });
+            }
+            
+            // Poll every 10 seconds
+            setInterval(updateNotifications, 10000);
+        });
+    </script>
+    
+    <script>
+        // Poll for notifications every 10 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            let lastUnreadCount = {{ Auth::user()->unreadNotifications->count() }};
+            
+            function updateNotifications() {
+                fetch('{{ route("notifications.unread") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const currentCount = data.unread_count;
+                    const badge = document.querySelector('.notification-badge .badge');
+                    if (badge) {
+                        badge.textContent = currentCount;
+                        if (currentCount > 0) {
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    
+                    // If new notifications, update the dropdown content and show toast
+                    if (currentCount > lastUnreadCount) {
+                        updateDropdown(data.notifications);
+                        showNotificationToast(data.notifications.filter(n => !n.read_at).slice(0, currentCount - lastUnreadCount));
+                    }
+                    
+                    lastUnreadCount = currentCount;
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+            }
+            
+            function updateDropdown(notifications) {
+                const dropdownMenu = document.querySelector('.notification-dropdown');
+                if (!dropdownMenu) return;
+                
+                // Find the divider and remove all notification items after it
+                const divider = dropdownMenu.querySelector('.dropdown-divider');
+                if (!divider) return;
+                
+                // Remove existing notification items
+                let nextSibling = divider.nextElementSibling;
+                while (nextSibling && !nextSibling.classList.contains('text-center')) {
+                    const temp = nextSibling.nextElementSibling;
+                    nextSibling.remove();
+                    nextSibling = temp;
+                }
+                
+                // Add new notifications before the "View All" link
+                const viewAllLink = dropdownMenu.querySelector('.text-center.py-2');
+                notifications.forEach(notification => {
+                    const item = document.createElement('div');
+                    item.className = 'notification-item ' + (notification.read_at ? 'read' : 'unread');
+                    item.innerHTML = `
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <div class="notification-title">${notification.title}</div>
+                                <div class="notification-message small text-muted">${notification.message}</div>
+                                ${notification.hash_summary ? `
+                                    <div class="mt-2 p-2 bg-light rounded small">
+                                        <strong>Evidence ID:</strong> ${notification.hash_summary.evidence_id}<br>
+                                        ${notification.hash_summary.file_updated ? `
+                                            <strong>File Updated:</strong> Yes<br>
+                                            ${notification.hash_summary.changes && notification.hash_summary.changes.file ? `
+                                                <strong>Hash Change:</strong><br>
+                                                <span class="text-danger">Old: ${notification.hash_summary.changes.file.old_hash.substring(0,16)}...</span><br>
+                                                <span class="text-success">New: ${notification.hash_summary.changes.file.new_hash.substring(0,16)}...</span>
+                                            ` : ''}
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
+                                <div class="notification-time small text-muted">${notification.created_at}</div>
+                            </div>
+                            ${!notification.read_at ? '<div class="notification-indicator"></div>' : ''}
+                        </div>
+                        ${notification.action_url ? `<div class="mt-2"><a href="${notification.action_url}" class="btn btn-sm btn-primary">View Details</a></div>` : ''}
+                        <div class="dropdown-divider"></div>
+                    `;
+                    dropdownMenu.insertBefore(item, viewAllLink);
+                });
+            }
+            
+            function showNotificationToast(newNotifications) {
+                if (newNotifications.length === 0) return;
+                
+                // Create a simple toast notification
+                const toastHtml = `
+                    <div class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-bell me-2"></i>
+                                You have ${newNotifications.length} new notification${newNotifications.length > 1 ? 's' : ''}!
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+                
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.innerHTML = toastHtml;
+                document.body.appendChild(toastContainer);
+                
+                const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+                toast.show();
+                
+                // Remove after shown
+                toastContainer.addEventListener('hidden.bs.toast', () => {
+                    toastContainer.remove();
+                });
+            }
+            
+            // Poll every 10 seconds
+            setInterval(updateNotifications, 10000);
+        });
+    </script>
+    
     @stack('scripts')
+    
 </body>
 </html>

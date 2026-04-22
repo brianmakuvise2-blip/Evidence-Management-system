@@ -58,4 +58,33 @@ class NotificationController extends Controller
 
         return back()->with('success', 'Notification deleted.');
     }
+
+    /**
+     * Get unread notifications count and latest notifications for AJAX.
+     */
+    public function getUnread(Request $request)
+    {
+        $user = $request->user();
+        $unreadCount = $user->unreadNotifications()->count();
+        $latestNotifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->data['title'] ?? 'Notification',
+                    'message' => $notification->data['message'] ?? '',
+                    'read_at' => $notification->read_at,
+                    'created_at' => $notification->created_at->diffForHumans(),
+                    'action_url' => $notification->data['action_url'] ?? null,
+                    'hash_summary' => $notification->data['hash_summary'] ?? null,
+                ];
+            });
+
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'notifications' => $latestNotifications,
+        ]);
+    }
 }

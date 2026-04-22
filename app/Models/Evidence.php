@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\CourtBundleItem;
 use App\Models\User;
+use App\Models\EvidenceHashHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Models\Permission;
@@ -474,4 +475,85 @@ class Evidence extends Model
 
         return $this;
     }
+
+/**
+     * Create a hash history entry for this evidence
+     */
+    public function createHashEntry($changeType, $user, $changedFields = null, $action = null, $notes = null)
+    {
+        $contentHash = null;
+        $metadataHash = null;
+
+        // Generate content hash based on evidence type
+        if ($this->file_path) {
+            $filePath = storage_path('app/evidence/' . $this->file_path);
+            if (file_exists($filePath)) {
+                $contentHash = hash_file('sha256', $filePath);
+            }
+        } else {
+            // For non-file evidence, hash the key attributes
+            $contentData = [
+                'title' => $this->title,
+                'description' => $this->description,
+                'evidence_type' => $this->evidence_type,
+                'collected_date' => $this->collected_date,
+                'source' => $this->source,
+                'location_found' => $this->location_found,
+                'metadata' => $this->metadata,
+            ];
+            $contentHash = hash('sha256', json_encode($contentData));
+        }
+
+        // Hash metadata separately
+        if ($this->metadata) {
+            $metadataHash = hash('sha256', json_encode($this->metadata));
+        }
+
+        // Get previous state for comparison
+        $previousEntry = EvidenceHashHistory::getLatestForEvidence($this->id);
+        $previousState = null;
+        if ($previousEntry) {
+            $previousState = [
+                'content_hash' => $previousEntry->content_hash,
+                'metadata_hash' => $previousEntry->metadata_hash,
+                'changed_fields' => $previousEntry->changed_fields,
+            ];
+        }
+
+        return EvidenceHashHistory::create([
+            'evidence_id' => $this->id,
+            'hash_type' => 'sha256',
+            'content_hash' => $contentHash,
+            'metadata_hash' => $metadataHash,
+            'change_type' => $changeType,
+            'previous_state' => $previousState,
+            'changed_fields' => $changedFields,
+            'user_id' => $user->id,
+            'user_ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'action' => $action,
+            'notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Check evidence integrity
+     */
+    public function checkIntegrity()
+    {
+        return EvidenceHashHistory::checkEvidenceIntegrity($this->id);
+    }
+
+    /**
+     * Verify the latest hash entry
+     */
+    public function verifyLatestHash($verifier)
+    {
+        $latestEntry = EvidenceHashHistory::getLatestForEvidence($this->id);
+        if ($latestEntry) {
+            return $latestEntry->verify($verifier);
+        }
+        return false;
+    }
 }
+

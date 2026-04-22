@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\AuditLogsController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\EvidenceController;
@@ -63,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Show and Download - accessible to all authenticated users
-    Route::get('/evidence/{evidence}', [EvidenceController::class, 'show'])->name('evidence.show');
+    Route::get('/evidence/{evidence}', [EvidenceController::class, 'show'])->name('evidence.show')->withTrashed();
     Route::get('/evidence/{evidence}/view', [EvidenceController::class, 'view'])->name('evidence.view');
     Route::get('/evidence/{evidence}/file', [EvidenceController::class, 'previewFile'])->name('evidence.file');
     Route::get('/evidence/{evidence}/download', [EvidenceController::class, 'download'])->name('evidence.download');
@@ -140,6 +141,22 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/{notification}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('/api/notifications/unread', [App\Http\Controllers\NotificationController::class, 'getUnread'])->name('notifications.unread');
+    
+    // =========== AUDIT LOGS ROUTES ===========
+    // Only accessible to administrators and system-administrators
+    Route::middleware(['role:administrator,system-administrator', 'permission:view-audit-logs'])->group(function () {
+        Route::get('/audit-logs', [AuditLogsController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/{auditLog}', [AuditLogsController::class, 'show'])->name('audit-logs.show');
+        Route::get('/audit-logs/export', [AuditLogsController::class, 'export'])->name('audit-logs.export');
+    });
+    
+    // =========== SETTINGS ROUTES ===========
+    // Only accessible to administrators and system-administrators
+    Route::middleware(['role:administrator,system-administrator', 'permission:manage-settings'])->group(function () {
+        Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    });
     
     // =========== USER MANAGEMENT ROUTES ===========
     // Only accessible to administrators and system-administrators

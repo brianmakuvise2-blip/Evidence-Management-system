@@ -6,6 +6,7 @@ use App\Models\Evidence;
 use App\Models\Institution;
 use App\Models\Department;
 use App\Models\User;
+use App\Models\EvidenceHashHistory;
 use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -197,10 +198,19 @@ class EvidenceController extends Controller
             'metadata' => $validated['metadata'] ?? null,
         ]);
 
+        // Create hash history entry for integrity tracking
+        $this->createHashHistoryEntry($evidence, 'created', Auth::user(), [
+            'action' => 'evidence_registered',
+            'notes' => 'Initial evidence registration with integrity hash',
+        ]);
+
         Auth::user()->logActivity('evidence_registered', 'success', [
             'evidence_id' => $evidence->id,
             'file_hash' => $fileHash,
         ]);
+
+        // Send notification for new evidence creation
+        $this->notifyAdministratorsOfEvidenceCreation($evidence);
 
         return redirect()->route('evidence.show', $evidence)
             ->with('success', 'Evidence successfully registered.');
@@ -325,25 +335,312 @@ class EvidenceController extends Controller
     {
         $administrators = User::whereHas('roles', function ($query) {
             $query->whereIn('name', ['administrator', 'system-administrator']);
-        })
-        ->where('id', '!=', Auth::id())
-        ->get();
+        })->get();
 
         if ($administrators->isEmpty()) {
             return;
         }
 
+        // Prepare detailed change information
+        $changeDetails = [
+            'evidence_id' => $evidence->id,
+            'evidence_title' => $evidence->title,
+            'case_reference' => $evidence->case_reference,
+            'modified_by' => Auth::user()->name,
+            'modified_at' => now()->toISOString(),
+            'file_updated' => isset($changes['file']),
+            'changes' => $changes,
+        ];
+
+        // Create a more detailed message for hash changes
+        $message = Auth::user()->name . ' modified evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
+
+        if (isset($changes['file'])) {
+            $message .= ' File was replaced with new hash integrity verification.';
+        }
+
+        // Add hash change details to the message
+        if (isset($changes['file']['old_hash']) && isset($changes['file']['new_hash'])) {
+            $message .= ' Hash changed from ' . substr($changes['file']['old_hash'], 0, 16) . '...' .
+                       ' to ' . substr($changes['file']['new_hash'], 0, 16) . '....';
+        }
+
+        // Create detailed hash change summary
+        $hashChangeSummary = $this->formatHashChangeSummary($evidence, $changes);
+
         $notificationData = [
-            'title' => 'Evidence Updated: ' . $evidence->title,
-            'message' => Auth::user()->name . ' modified evidence "' . $evidence->title . '".',
+            'title' => 'Evidence Integrity Change: ' . $evidence->title,
+            'message' => $message,
             'action_url' => route('evidence.show', $evidence),
-            'action_text' => 'Review Evidence',
-            'details' => $changes,
+            'action_text' => 'Review Changes',
+            'details' => $changeDetails,
+            'hash_summary' => $hashChangeSummary,
         ];
 
         foreach ($administrators as $admin) {
             $admin->notify(new GeneralNotification($notificationData));
         }
+
+        // Also log this security event
+        Auth::user()->logActivity('evidence_integrity_notification_sent', 'info', [
+            'evidence_id' => $evidence->id,
+            'notification_recipients' => $administrators->pluck('name')->toArray(),
+            'change_details' => $changeDetails,
+        ]);
+    }
+
+    /**
+     * Format hash change summary for notifications
+     */
+    protected function formatHashChangeSummary(Evidence $evidence, array $changes): array
+    {
+        $summary = [
+            'evidence_id' => $evidence->id,
+            'file_updated' => isset($changes['file']),
+            'changes' => [],
+        ];
+
+        // Format each change
+        foreach ($changes as $field => $change) {
+            if ($field === 'file' && is_array($change)) {
+                $summary['changes']['file'] = [
+                    'old_hash' => $change['old_hash'] ?? null,
+                    'new_hash' => $change['new_hash'] ?? null,
+                    'old_path' => $change['old_path'] ?? null,
+                    'new_path' => $change['new_path'] ?? null,
+                    'hash_changed' => ($change['old_hash'] ?? null) !== ($change['new_hash'] ?? null),
+                ];
+            } elseif (is_array($change) && isset($change['old']) && isset($change['new'])) {
+                $summary['changes'][$field] = [
+                    'old' => $change['old'],
+                    'new' => $change['new'],
+                    'changed' => $change['old'] !== $change['new'],
+                ];
+            } else {
+                $summary['changes'][$field] = $change;
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Notify administrators of evidence deletion
+     */
+    protected function notifyAdministratorsOfEvidenceDeletion(Evidence $evidence): void
+    {
+        $administrators = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['administrator', 'system-administrator']);
+        })->get();
+
+        if ($administrators->isEmpty()) {
+            return;
+        }
+
+        // Prepare deletion details
+        $deletionDetails = [
+            'evidence_id' => $evidence->id,
+            'evidence_title' => $evidence->title,
+            'case_reference' => $evidence->case_reference,
+            'exhibit_number' => $evidence->exhibit_number,
+            'evidence_type' => $evidence->evidence_type,
+            'deleted_by' => Auth::user()->name,
+            'deleted_at' => now()->toISOString(),
+            'file_path' => $evidence->file_path,
+            'institution' => $evidence->institution->name ?? null,
+            'department' => $evidence->department->name ?? null,
+        ];
+
+        $message = Auth::user()->name . ' permanently deleted evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
+
+        if ($evidence->file_path) {
+            $message .= ' Associated file was also removed from storage.';
+        }
+
+        $notificationData = [
+            'title' => 'Evidence Deleted: ' . $evidence->title,
+            'message' => $message,
+            'action_url' => route('evidence.show', $evidence), // Link to evidence show page - will show deleted status
+            'action_text' => 'View Deleted Evidence',
+            'details' => $deletionDetails,
+            'hash_summary' => null, // No hash summary for deletions
+        ];
+
+        foreach ($administrators as $admin) {
+            $admin->notify(new GeneralNotification($notificationData));
+        }
+
+        // Also log this security event
+        Auth::user()->logActivity('evidence_deletion_notification_sent', 'warning', [
+            'evidence_id' => $evidence->id,
+            'notification_recipients' => $administrators->pluck('name')->toArray(),
+            'deletion_details' => $deletionDetails,
+        ]);
+    }
+
+    /**
+     * Notify administrators of evidence creation
+     */
+    protected function notifyAdministratorsOfEvidenceCreation(Evidence $evidence): void
+    {
+        $administrators = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['administrator', 'system-administrator']);
+        })->get();
+
+        if ($administrators->isEmpty()) {
+            return;
+        }
+
+        // Prepare creation details
+        $creationDetails = [
+            'evidence_id' => $evidence->id,
+            'evidence_title' => $evidence->title,
+            'case_reference' => $evidence->case_reference,
+            'exhibit_number' => $evidence->exhibit_number,
+            'evidence_type' => $evidence->evidence_type,
+            'collected_date' => $evidence->collected_date,
+            'created_by' => Auth::user()->name,
+            'created_at' => now()->toISOString(),
+            'file_path' => $evidence->file_path,
+            'file_hash' => $evidence->file_hash,
+            'institution' => $evidence->institution->name ?? null,
+            'department' => $evidence->department->name ?? null,
+            'status' => $evidence->status,
+        ];
+
+        $message = Auth::user()->name . ' registered new evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
+
+        if ($evidence->file_path) {
+            $message .= ' Evidence includes a file with integrity hash: ' . substr($evidence->file_hash, 0, 16) . '...';
+        }
+
+        $notificationData = [
+            'title' => 'New Evidence Registered: ' . $evidence->title,
+            'message' => $message,
+            'action_url' => route('evidence.show', $evidence),
+            'action_text' => 'Review Evidence',
+            'details' => $creationDetails,
+            'hash_summary' => null, // No hash summary for creation
+        ];
+
+        foreach ($administrators as $admin) {
+            $admin->notify(new GeneralNotification($notificationData));
+        }
+
+        // Also log this security event
+        Auth::user()->logActivity('evidence_creation_notification_sent', 'info', [
+            'evidence_id' => $evidence->id,
+            'notification_recipients' => $administrators->pluck('name')->toArray(),
+            'creation_details' => $creationDetails,
+        ]);
+    }
+
+    /**     * Notify administrators of evidence verification/rejection
+     */
+    protected function notifyAdministratorsOfEvidenceVerification(Evidence $evidence, string $action, ?string $notes): void
+    {
+        $administrators = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['administrator', 'system-administrator']);
+        })->get();
+
+        if ($administrators->isEmpty()) {
+            return;
+        }
+
+        // Prepare verification details
+        $verificationDetails = [
+            'evidence_id' => $evidence->id,
+            'evidence_title' => $evidence->title,
+            'case_reference' => $evidence->case_reference,
+            'exhibit_number' => $evidence->exhibit_number,
+            'action' => $action, // 'approve' or 'reject'
+            'verified_by' => Auth::user()->name,
+            'verified_at' => now()->toISOString(),
+            'verification_notes' => $notes,
+            'previous_status' => $evidence->getOriginal('status'),
+            'new_status' => $evidence->status,
+            'collected_by' => $evidence->collectedBy->name ?? null,
+        ];
+
+        if ($action === 'approve') {
+            $title = 'Evidence Verified: ' . $evidence->title;
+            $message = Auth::user()->name . ' verified evidence "' . $evidence->title . '" (ID: ' . $evidence->id . '). Evidence is now officially verified.';
+        } else {
+            $title = 'Evidence Rejected: ' . $evidence->title;
+            $message = Auth::user()->name . ' rejected evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
+            if ($notes) {
+                $message .= ' Reason: ' . $notes;
+            }
+        }
+
+        $notificationData = [
+            'title' => $title,
+            'message' => $message,
+            'action_url' => route('evidence.show', $evidence),
+            'action_text' => 'Review Decision',
+            'details' => $verificationDetails,
+            'hash_summary' => null, // No hash summary for verification
+        ];
+
+        foreach ($administrators as $admin) {
+            $admin->notify(new GeneralNotification($notificationData));
+        }
+
+        // Also log this security event
+        Auth::user()->logActivity('evidence_verification_notification_sent', 'info', [
+            'evidence_id' => $evidence->id,
+            'notification_recipients' => $administrators->pluck('name')->toArray(),
+            'verification_details' => $verificationDetails,
+        ]);
+    }
+
+    /**
+     * Notify administrators of evidence archiving
+     */
+    protected function notifyAdministratorsOfEvidenceArchiving(Evidence $evidence): void
+    {
+        $administrators = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['administrator', 'system-administrator']);
+        })->get();
+
+        if ($administrators->isEmpty()) {
+            return;
+        }
+
+        // Prepare archiving details
+        $archivingDetails = [
+            'evidence_id' => $evidence->id,
+            'evidence_title' => $evidence->title,
+            'case_reference' => $evidence->case_reference,
+            'exhibit_number' => $evidence->exhibit_number,
+            'archived_by' => Auth::user()->name,
+            'archived_at' => now()->toISOString(),
+            'previous_status' => $evidence->getOriginal('status'),
+            'new_status' => Evidence::STATUS_ARCHIVED,
+            'collected_by' => $evidence->collectedBy->name ?? null,
+        ];
+
+        $message = Auth::user()->name . ' archived evidence "' . $evidence->title . '" (ID: ' . $evidence->id . '). Evidence is now in archived status.';
+
+        $notificationData = [
+            'title' => 'Evidence Archived: ' . $evidence->title,
+            'message' => $message,
+            'action_url' => route('evidence.show', $evidence),
+            'action_text' => 'View Archived Evidence',
+            'details' => $archivingDetails,
+            'hash_summary' => null, // No hash summary for archiving
+        ];
+
+        foreach ($administrators as $admin) {
+            $admin->notify(new GeneralNotification($notificationData));
+        }
+
+        // Also log this security event
+        Auth::user()->logActivity('evidence_archiving_notification_sent', 'info', [
+            'evidence_id' => $evidence->id,
+            'notification_recipients' => $administrators->pluck('name')->toArray(),
+            'archiving_details' => $archivingDetails,
+        ]);
     }
 
     /**
@@ -382,6 +679,9 @@ class EvidenceController extends Controller
             'verification_action' => $validated['action'],
         ]);
 
+        // Send notification for verification/rejection
+        $this->notifyAdministratorsOfEvidenceVerification($evidence, $validated['action'], $validated['verification_notes']);
+
         return redirect()->route('evidence.show', $evidence)
             ->with('success', $message);
     }
@@ -408,6 +708,9 @@ class EvidenceController extends Controller
             'evidence_id' => $evidence->id,
         ]);
 
+        // Send notification for archiving
+        $this->notifyAdministratorsOfEvidenceArchiving($evidence);
+
         return redirect()->route('evidence.show', $evidence)
             ->with('success', 'Evidence successfully archived.');
     }
@@ -422,6 +725,9 @@ class EvidenceController extends Controller
             return redirect()->route('evidence.index')
                 ->with('error', 'Only system administrators can delete evidence.');
         }
+
+        // Send notification before deletion
+        $this->notifyAdministratorsOfEvidenceDeletion($evidence);
 
         // Delete file if exists
         if ($evidence->file_path) {
@@ -591,5 +897,67 @@ class EvidenceController extends Controller
         Storage::disk('evidence')->put($filePath, encrypt($fileContents));
 
         return $filePath;
+    }
+
+    /**
+     * Create a hash history entry for evidence integrity tracking
+     */
+    protected function createHashHistoryEntry(Evidence $evidence, string $changeType, User $user, array $options = [])
+    {
+        $contentHash = null;
+        $metadataHash = null;
+
+        // Generate content hash
+        if ($evidence->file_path) {
+            $filePath = storage_path('app/evidence/' . $evidence->file_path);
+            if (file_exists($filePath)) {
+                $contentHash = hash_file('sha256', $filePath);
+            }
+        } else {
+            // For non-file evidence, hash key attributes
+            $contentData = [
+                'title' => $evidence->title,
+                'description' => $evidence->description,
+                'evidence_type' => $evidence->evidence_type,
+                'collected_date' => $evidence->collected_date?->toISOString(),
+                'source' => $evidence->source,
+                'location_found' => $evidence->location_found,
+            ];
+            $contentHash = hash('sha256', json_encode($contentData));
+        }
+
+        // Hash metadata
+        if ($evidence->metadata) {
+            $metadataHash = hash('sha256', json_encode($evidence->metadata));
+        }
+
+        // Get previous state
+        $previousEntry = \App\Models\EvidenceHashHistory::where('evidence_id', $evidence->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $previousState = null;
+        if ($previousEntry) {
+            $previousState = [
+                'content_hash' => $previousEntry->content_hash,
+                'metadata_hash' => $previousEntry->metadata_hash,
+                'created_at' => $previousEntry->created_at,
+            ];
+        }
+
+        return \App\Models\EvidenceHashHistory::create([
+            'evidence_id' => $evidence->id,
+            'hash_type' => 'sha256',
+            'content_hash' => $contentHash,
+            'metadata_hash' => $metadataHash,
+            'change_type' => $changeType,
+            'previous_state' => $previousState,
+            'changed_fields' => $options['changed_fields'] ?? null,
+            'user_id' => $user->id,
+            'user_ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'action' => $options['action'] ?? null,
+            'notes' => $options['notes'] ?? null,
+        ]);
     }
 }
