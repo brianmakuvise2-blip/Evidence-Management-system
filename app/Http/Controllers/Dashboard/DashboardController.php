@@ -24,9 +24,9 @@ class DashboardController extends Controller
         $user->load('roles', 'institution', 'department', 'activityLogs');
 
         // Get different data based on user role
-        if ($user->hasRole('system-administrator')) {
+        if ($user->hasRole('system-administrator') || $user->hasRole('super-admin')) {
             return $this->systemAdminDashboard($user);
-        } 
+        }
         elseif ($user->hasRole('source-officer')) {
             return $this->sourceOfficerDashboard($user);
         }
@@ -47,12 +47,30 @@ class DashboardController extends Controller
         }
         elseif ($user->hasRole('administrator')) {
             return $this->adminDashboard($user);
-        } 
+        }
         elseif ($user->hasRole('evidence-officer')) {
             return $this->evidenceOfficerDashboard($user);
-        } 
+        }
+        elseif ($user->hasRole('rbz-system-admin')) {
+            return $this->institutionAdminDashboard($user, 'rbz');
+        }
+        elseif ($user->hasRole('zacc-system-admin')) {
+            return $this->institutionAdminDashboard($user, 'zacc');
+        }
+        elseif ($user->hasRole('npa-system-admin')) {
+            return $this->institutionAdminDashboard($user, 'npa');
+        }
+        elseif ($user->hasRole('zrp-system-admin')) {
+            return $this->institutionAdminDashboard($user, 'zrp');
+        }
+        elseif ($user->hasRole('judicial-system-admin')) {
+            return $this->institutionAdminDashboard($user, 'judicial');
+        }
+        elseif ($user->hasRole('judicial-courts-admin')) {
+            return $this->institutionAdminDashboard($user, 'courts');
+        }
         else {
-            return $this->userDashboard($user);
+            return $this->regularUserDashboard($user);
         }
     }
 
@@ -317,5 +335,114 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.judicial-viewer', compact('user', 'data'));
+    }
+
+    /**
+     * Institution-Specific Admin Dashboard
+     * For RBZ, ZACC, NPA, ZRP, Judicial, and Courts admins
+     */
+    private function institutionAdminDashboard($user, $institutionType)
+    {
+        // Base data for all institution admins
+        $baseData = [
+            'institutionUsers' => User::where('institution_id', $user->institution_id)->count(),
+            'activeUsers' => User::where('institution_id', $user->institution_id)->where('account_status', 'active')->count(),
+            'institutionEvidence' => Evidence::where('institution_id', $user->institution_id)->count(),
+            'pendingTransfers' => TransferRequest::where(function($query) use ($user) {
+                $query->where('requested_by_user_id', $user->id)
+                      ->orWhere('destination_institution_id', $user->institution_id);
+            })->where('status', TransferRequest::STATUS_PENDING)->count(),
+            'recentLogs' => UserActivityLog::where('user_id', $user->id)->latest()->limit(5)->get(),
+        ];
+
+        // Institution-specific data
+        switch ($institutionType) {
+            case 'rbz':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'rbz-admin',
+                    'financialEvidence' => Evidence::where('institution_id', $user->institution_id)
+                        ->where(function($query) {
+                            $query->where('evidence_type', 'financial')
+                                  ->orWhere('title', 'like', '%financial%')
+                                  ->orWhere('title', 'like', '%banking%');
+                        })->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            case 'zacc':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'zacc-admin',
+                    'investigativeCases' => Evidence::where('institution_id', $user->institution_id)
+                        ->where(function($query) {
+                            $query->where('evidence_type', 'digital')
+                                  ->orWhere('title', 'like', '%corruption%')
+                                  ->orWhere('title', 'like', '%investigation%');
+                        })->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            case 'npa':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'npa-admin',
+                    'courtBundles' => CourtBundle::where('prepared_by_user_id', $user->id)->count(),
+                    'disclosedEvidence' => CourtBundle::whereHas('disclosures', function($query) use ($user) {
+                        $query->where('disclosed_by_user_id', $user->id);
+                    })->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            case 'zrp':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'zrp-admin',
+                    'seizureEvidence' => Evidence::where('institution_id', $user->institution_id)
+                        ->where(function($query) {
+                            $query->where('evidence_type', 'physical')
+                                  ->orWhere('title', 'like', '%seizure%')
+                                  ->orWhere('title', 'like', '%exhibit%');
+                        })->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            case 'judicial':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'judicial-admin',
+                    'approvedBundles' => CourtBundle::where('status', CourtBundle::STATUS_APPROVED)->count(),
+                    'sharedBundles' => CourtBundle::whereHas('disclosures', function($query) use ($user) {
+                        $query->where('shared_with_user_id', $user->id);
+                    })->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            case 'courts':
+                $data = array_merge($baseData, [
+                    'dashboardType' => 'courts-admin',
+                    'archivedEvidence' => Evidence::where('institution_id', $user->institution_id)
+                        ->where('status', 'archived')->count(),
+                    'disposedEvidence' => Evidence::where('institution_id', $user->institution_id)
+                        ->where('status', 'disposed')->count(),
+                ]);
+                return view('dashboard.institution-admin', compact('user', 'data'));
+
+            default:
+                return $this->regularUserDashboard($user);
+        }
+    }
+
+    /**
+     * Regular User Dashboard
+     * For users without specific admin roles
+     */
+    private function regularUserDashboard($user)
+    {
+        $data = [
+            'userInfo' => $user,
+            'lastLogin' => $user->last_login_at,
+            'department' => $user->department,
+            'institution' => $user->institution,
+            'recentActivity' => UserActivityLog::where('user_id', $user->id)->latest()->limit(5)->get(),
+            'dashboardType' => 'regular-user',
+        ];
+
+        return view('dashboard.regular-user', compact('user', 'data'));
     }
 }

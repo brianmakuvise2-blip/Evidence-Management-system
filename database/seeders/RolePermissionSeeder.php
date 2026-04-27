@@ -16,10 +16,19 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // Create roles (skip if they already exist)
+        // Create institution-specific admin roles
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']); // COB overall admin
+        $rbzSystemAdmin = Role::firstOrCreate(['name' => 'rbz-system-admin', 'guard_name' => 'web']);
+        $zaccSystemAdmin = Role::firstOrCreate(['name' => 'zacc-system-admin', 'guard_name' => 'web']);
+        $npaSystemAdmin = Role::firstOrCreate(['name' => 'npa-system-admin', 'guard_name' => 'web']);
+        $zrpSystemAdmin = Role::firstOrCreate(['name' => 'zrp-system-admin', 'guard_name' => 'web']);
+        $judicialSystemAdmin = Role::firstOrCreate(['name' => 'judicial-system-admin', 'guard_name' => 'web']);
+        $judicialCourtsAdmin = Role::firstOrCreate(['name' => 'judicial-courts-admin', 'guard_name' => 'web']);
+
+        // Legacy roles (keeping for backward compatibility)
         $systemAdmin = Role::firstOrCreate(['name' => 'system-administrator', 'guard_name' => 'web']);
         $admin = Role::firstOrCreate(['name' => 'administrator', 'guard_name' => 'web']);
-        
+
         // New Module 4 roles
         $sourceOfficer = Role::firstOrCreate(['name' => 'source-officer', 'guard_name' => 'web']);
         $investigator = Role::firstOrCreate(['name' => 'investigator', 'guard_name' => 'web']);
@@ -27,7 +36,7 @@ class RolePermissionSeeder extends Seeder
         $prosecutor = Role::firstOrCreate(['name' => 'prosecutor', 'guard_name' => 'web']);
         $judicialViewer = Role::firstOrCreate(['name' => 'judicial-viewer', 'guard_name' => 'web']);
         $supervisor = Role::firstOrCreate(['name' => 'supervisor', 'guard_name' => 'web']);
-        
+
         // Legacy roles
         $evidenceOfficer = Role::firstOrCreate(['name' => 'evidence-officer', 'guard_name' => 'web']);
         $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
@@ -58,6 +67,11 @@ class RolePermissionSeeder extends Seeder
             'manage-permissions',
             'view-audit-logs',
             'manage-settings',
+            'manage-notifications',
+            'archive-evidence',
+            'dispose-evidence',
+            'register-seizure',
+            'retrieve-evidence',
         ];
 
         foreach ($permissions as $permission) {
@@ -66,7 +80,136 @@ class RolePermissionSeeder extends Seeder
 
         // Sync permissions to roles (instead of giving directly to avoid duplicates)
 
-        // System Administrator - Management Only (NOT operational approvals)
+        // Super Admin (COB Overall Admin) - Full system access including audit logs and settings
+        $superAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'delete-user',
+            'archive-user',
+            'manage-evidence',
+            'create-evidence',
+            'edit-evidence',
+            'delete-evidence',
+            'manage-custody',
+            'request-transfer',
+            'approve-transfer',
+            'reject-transfer',
+            'acknowledge-receipt',
+            'disclose-evidence',
+            'prepare-bundle',
+            'view-bundle',
+            'view-all-evidence',
+            'view-reports',
+            'manage-roles',
+            'manage-permissions',
+            'view-audit-logs',
+            'manage-settings',
+            'manage-notifications',
+            'archive-evidence',
+            'dispose-evidence',
+            'register-seizure',
+            'retrieve-evidence',
+        ]);
+
+        // RBZ System Admin - Limited evidence registration with audit logs
+        $rbzSystemAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'manage-evidence',
+            'create-evidence',
+            'edit-evidence',
+            'manage-custody',
+            'request-transfer',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // ZACC System Admin - Limited evidence registration with audit logs
+        $zaccSystemAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'manage-evidence',
+            'create-evidence',
+            'edit-evidence',
+            'manage-custody',
+            'request-transfer',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // NPA System Admin - Retrieve evidence for prosecution and trial preparation
+        $npaSystemAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'manage-evidence',
+            'create-evidence',
+            'edit-evidence',
+            'manage-custody',
+            'request-transfer',
+            'disclose-evidence',
+            'prepare-bundle',
+            'view-bundle',
+            'retrieve-evidence',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // ZRP System Admin - Register seizure docs and exhibits
+        $zrpSystemAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'manage-evidence',
+            'create-evidence',
+            'edit-evidence',
+            'register-seizure',
+            'manage-custody',
+            'request-transfer',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // Judicial System Admin - Access approved evidence bundles and orders
+        $judicialSystemAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'view-bundle',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // Judicial Courts Admin - Archive, retention, disposal of evidence
+        $judicialCourtsAdmin->syncPermissions([
+            'view-dashboard',
+            'manage-users',
+            'create-user',
+            'edit-user',
+            'manage-evidence',
+            'view-bundle',
+            'archive-evidence',
+            'dispose-evidence',
+            'view-reports',
+            'view-audit-logs',
+            'manage-notifications',
+        ]);
+
+        // Legacy System Administrator - Management Only (NOT operational approvals)
         $systemAdmin->syncPermissions([
             'view-dashboard',
             'manage-users',
@@ -80,9 +223,10 @@ class RolePermissionSeeder extends Seeder
             'view-all-evidence',
             'view-audit-logs',
             'view-reports',
+            'manage-notifications',
         ]);
 
-        // Administrator - User Management
+        // Legacy Administrator - User Management
         $admin->syncPermissions([
             'view-dashboard',
             'manage-users',
@@ -94,6 +238,7 @@ class RolePermissionSeeder extends Seeder
             'view-all-evidence',
             'view-reports',
             'view-audit-logs',
+            'manage-notifications',
         ]);
 
         // Source Officer - Create & upload evidence
@@ -130,6 +275,7 @@ class RolePermissionSeeder extends Seeder
             'view-bundle',
             'disclose-evidence',
             'view-audit-logs',
+            'manage-notifications',
         ]);
 
         // Judicial Viewer - Read-only access
@@ -137,6 +283,7 @@ class RolePermissionSeeder extends Seeder
             'view-dashboard',
             'view-bundle',
             'view-audit-logs',
+            'manage-notifications',
         ]);
 
         // Supervisor - Approve/reject transfers within institution
@@ -147,6 +294,7 @@ class RolePermissionSeeder extends Seeder
             'reject-transfer',
             'manage-custody',
             'view-audit-logs',
+            'manage-notifications',
         ]);
 
         // Evidence Officer - Evidence & Custody Management (legacy)
@@ -156,6 +304,7 @@ class RolePermissionSeeder extends Seeder
             'create-evidence',
             'edit-evidence',
             'manage-custody',
+            'manage-notifications',
         ]);
 
         // Regular User - View Only

@@ -57,8 +57,8 @@ Route::middleware(['auth'])->group(function () {
     // Index - accessible to all authenticated users
     Route::get('/evidence', [EvidenceController::class, 'index'])->name('evidence.index');
     
-    // Create and Store - restricted to source officers and administrators
-    Route::middleware(['role:source-officer,administrator,system-administrator'])->group(function () {
+    // Create and Store - restricted to source officers, administrators, and institution system admins
+    Route::middleware(['role:source-officer,administrator,system-administrator,super-admin,rbz-system-admin,zacc-system-admin,npa-system-admin,zrp-system-admin'])->group(function () {
         Route::get('/evidence/create', [EvidenceController::class, 'create'])->name('evidence.create');
         Route::post('/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
     });
@@ -69,20 +69,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/evidence/{evidence}/file', [EvidenceController::class, 'previewFile'])->name('evidence.file');
     Route::get('/evidence/{evidence}/download', [EvidenceController::class, 'download'])->name('evidence.download');
     
-    // Edit and Update - restricted to evidence officers and administrators
-    Route::middleware(['role:evidence-officer,administrator,system-administrator'])->group(function () {
+    // Edit and Update - restricted to evidence officers, administrators, and institution system admins
+    Route::middleware(['role:evidence-officer,administrator,system-administrator,super-admin,rbz-system-admin,zacc-system-admin,npa-system-admin,zrp-system-admin'])->group(function () {
         Route::get('/evidence/{evidence}/edit', [EvidenceController::class, 'edit'])->name('evidence.edit');
         Route::put('/evidence/{evidence}', [EvidenceController::class, 'update'])->name('evidence.update');
     });
     
-    // Verify and Archive - restricted to administrators and system administrators
-    Route::middleware(['role:administrator,system-administrator'])->group(function () {
+    // Verify and Archive - restricted to administrators, system administrators, and super admin
+    Route::middleware(['role:administrator,system-administrator,super-admin'])->group(function () {
         Route::post('/evidence/{evidence}/verify', [EvidenceController::class, 'verify'])->name('evidence.verify');
         Route::patch('/evidence/{evidence}/archive', [EvidenceController::class, 'archive'])->name('evidence.archive');
     });
     
-    // Delete - restricted to system administrators only
-    Route::middleware(['role:system-administrator'])->group(function () {
+    // Delete - restricted to system administrators and super admin only
+    Route::middleware(['role:system-administrator,super-admin'])->group(function () {
         Route::delete('/evidence/{evidence}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
     });
     
@@ -144,23 +144,23 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/notifications/unread', [App\Http\Controllers\NotificationController::class, 'getUnread'])->name('notifications.unread');
     
     // =========== AUDIT LOGS ROUTES ===========
-    // Only accessible to administrators and system-administrators
-    Route::middleware(['role:administrator,system-administrator', 'permission:view-audit-logs'])->group(function () {
+    // Accessible to administrators, system-administrators, and institution system admins
+    Route::middleware(['role:administrator,system-administrator,super-admin,rbz-system-admin,zacc-system-admin,npa-system-admin,judicial-system-admin,judicial-courts-admin', 'permission:view-audit-logs'])->group(function () {
         Route::get('/audit-logs', [AuditLogsController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogsController::class, 'show'])->name('audit-logs.show');
         Route::get('/audit-logs/export', [AuditLogsController::class, 'export'])->name('audit-logs.export');
     });
     
     // =========== SETTINGS ROUTES ===========
-    // Only accessible to administrators and system-administrators
-    Route::middleware(['role:administrator,system-administrator', 'permission:manage-settings'])->group(function () {
+    // Only accessible to super-admin (COB overall admin)
+    Route::middleware(['role:super-admin', 'permission:manage-settings'])->group(function () {
         Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::put('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
     });
     
     // =========== USER MANAGEMENT ROUTES ===========
-    // Only accessible to administrators and system-administrators
-    Route::middleware(['role:administrator,system-administrator'])->prefix('admin')->name('admin.')->group(function () {
+    // Accessible to administrators, system-administrators, and institution system admins
+    Route::middleware(['role:administrator,system-administrator,super-admin,rbz-system-admin,zacc-system-admin,npa-system-admin,zrp-system-admin,judicial-system-admin,judicial-courts-admin'])->prefix('admin')->name('admin.')->group(function () {
         
         // List all users (GET /admin/users)
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
