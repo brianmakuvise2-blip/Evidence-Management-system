@@ -745,6 +745,13 @@
                         </a>
                     </div>
                     
+                    <div class="nav-item">
+                        <a href="{{ route('about') }}" class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}">
+                            <i class="bi bi-info-circle"></i>
+                            <span>About</span>
+                        </a>
+                    </div>
+                    
                     @if(Auth::user()->hasAnyRole(['administrator', 'system-administrator']) || Auth::user()->can('manage-evidence'))
                     <div class="nav-item">
                         <a href="{{ route('evidence.index') }}" class="nav-link {{ request()->routeIs('evidence.*') ? 'active' : '' }}">

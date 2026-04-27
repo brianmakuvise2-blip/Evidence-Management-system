@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\AuditLogsController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\TransferRequestController;
@@ -39,6 +40,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard - Accessible to all authenticated users
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // About - Accessible to all authenticated users
+    Route::get('/about', [AboutController::class, 'index'])->name('about');
     
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
