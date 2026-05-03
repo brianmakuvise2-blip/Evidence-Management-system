@@ -160,6 +160,17 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:super-admin', 'permission:manage-settings'])->group(function () {
         Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::put('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::post('/settings/clear-cache', [App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
+    });
+
+    // =========== ROLE MANAGEMENT ROUTES ===========
+    Route::middleware(['role:super-admin', 'permission:manage-roles'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/roles', [App\Http\Controllers\Admin\RoleManagementController::class, 'index'])->name('roles.index');
+        Route::get('/roles/create', [App\Http\Controllers\Admin\RoleManagementController::class, 'create'])->name('roles.create');
+        Route::post('/roles', [App\Http\Controllers\Admin\RoleManagementController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{role}/edit', [App\Http\Controllers\Admin\RoleManagementController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{role}', [App\Http\Controllers\Admin\RoleManagementController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [App\Http\Controllers\Admin\RoleManagementController::class, 'destroy'])->name('roles.destroy');
     });
     
     // =========== USER MANAGEMENT ROUTES ===========

@@ -213,8 +213,11 @@
             {{-- Chain of Custody Card --}}
             @if($evidence->chainOfCustodyRecords->count() > 0)
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light">
-                        <h5 class="card-title mb-0">Chain of Custody</h5>
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="bi bi-link-45deg me-2"></i>Chain of Custody</h5>
+                        <a href="{{ route('custody-history', $evidence) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-clock-history me-1"></i>Full History
+                        </a>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm mb-0">
@@ -242,6 +245,90 @@
                     </div>
                 </div>
             @endif
+
+            {{-- Integrity Hash History Card --}}
+            @php
+                $hashHistory = \App\Models\EvidenceHashHistory::getHistoryForEvidence($evidence->id);
+            @endphp
+            @if($hashHistory->count() > 0)
+            <div class="card shadow-sm mb-4 border-warning">
+                <div class="card-header bg-warning bg-opacity-10 border-warning d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-shield-check me-2 text-warning"></i>Integrity Hash History
+                    </h5>
+                    <span class="badge bg-warning text-dark">{{ $hashHistory->count() }} entr{{ $hashHistory->count() === 1 ? 'y' : 'ies' }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:140px;">Date</th>
+                                <th style="width:110px;">Event</th>
+                                <th>Content Hash (SHA-256)</th>
+                                <th style="width:130px;">Changed By</th>
+                                <th style="width:90px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $prevHash = null; @endphp
+                            @foreach($hashHistory as $i => $entry)
+                            @php
+                                $hashMismatch = $prevHash && $prevHash !== $entry->content_hash;
+                                $isLatest = $i === 0;
+                            @endphp
+                            <tr class="{{ $entry->tampering_detected ? 'table-danger' : ($isLatest ? 'table-success bg-opacity-25' : '') }}">
+                                <td class="small">{{ $entry->created_at->format('d M Y H:i') }}</td>
+                                <td>
+                                    <span class="badge {{ match($entry->change_type) {
+                                        'created' => 'bg-success',
+                                        'updated' => 'bg-warning text-dark',
+                                        'verified' => 'bg-primary',
+                                        'file_replaced' => 'bg-danger',
+                                        default => 'bg-secondary'
+                                    } }}">{{ ucfirst(str_replace('_', ' ', $entry->change_type)) }}</span>
+                                </td>
+                                <td>
+                                    <code class="small">{{ $entry->content_hash ?? '—' }}</code>
+                                    @if($entry->previous_state && isset($entry->previous_state['content_hash']) && $entry->previous_state['content_hash'] !== $entry->content_hash)
+                                        <br><small class="text-muted">← <span class="text-danger font-monospace" style="font-size:.7rem;">{{ $entry->previous_state['content_hash'] }}</span></small>
+                                    @endif
+                                    @if($entry->changed_fields && !empty($entry->changed_fields))
+                                        @php
+                                            $fieldChanges = collect($entry->changed_fields)->filter(fn($v, $k) => $k !== '_integrity_hash' && is_array($v) && isset($v['old'], $v['new']));
+                                        @endphp
+                                        @foreach($fieldChanges as $field => $change)
+                                            <br><small class="text-muted">{{ ucfirst(str_replace('_',' ',$field)) }}: <span class="text-danger">{{ $change['old'] }}</span> → <span class="text-success">{{ $change['new'] }}</span></small>
+                                        @endforeach
+                                    @endif
+                                </td>
+                                <td class="small">{{ $entry->user?->name ?? '—' }}</td>
+                                <td>
+                                    @if($entry->tampering_detected)
+                                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tampered</span>
+                                    @elseif($isLatest)
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Current</span>
+                                    @else
+                                        <span class="badge bg-light text-dark border">Historic</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @php $prevHash = $entry->content_hash; @endphp
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @php
+                    $tampered = $hashHistory->where('tampering_detected', true)->count();
+                @endphp
+                @if($tampered > 0)
+                <div class="card-footer bg-danger text-white">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>WARNING:</strong> {{ $tampered }} tampering event(s) detected. Contact your system administrator immediately.
+                </div>
+                @endif
+            </div>
+            @endif
+
         </div>
 
         {{-- Sidebar --}}

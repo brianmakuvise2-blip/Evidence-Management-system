@@ -313,8 +313,27 @@ class EvidenceController extends Controller
             $changedFields['note'] = 'Evidence update submitted with no material field changes.';
         }
 
+        // Capture old hash BEFORE update for comparison
+        $oldHashEntry = EvidenceHashHistory::getLatestForEvidence($evidence->id);
+        $oldContentHash = $oldHashEntry?->content_hash;
+
         // Update evidence
         $evidence->update($validated);
+
+        // Create new hash history entry — covers ALL changes including title, description, etc.
+        $freshEvidence = $evidence->fresh();
+        $newHashEntry = $this->createHashHistoryEntry($freshEvidence, 'updated', Auth::user(), [
+            'changed_fields' => $changedFields,
+            'action' => 'evidence_updated',
+            'notes' => 'Evidence record modified',
+        ]);
+
+        // Add hash comparison to change log for notification
+        $changedFields['_integrity_hash'] = [
+            'old_hash' => $oldContentHash,
+            'new_hash' => $newHashEntry?->content_hash,
+            'hash_changed' => $oldContentHash !== $newHashEntry?->content_hash,
+        ];
 
         Auth::user()->logActivity('evidence_updated', 'success', [
             'evidence_id' => $evidence->id,
@@ -322,9 +341,9 @@ class EvidenceController extends Controller
             'changes' => $changedFields,
         ]);
 
-        $this->notifyAdministratorsOfEvidenceChange($evidence, $changedFields);
+        $this->notifyAdministratorsOfEvidenceChange($freshEvidence, $changedFields);
 
-        return redirect()->route('evidence.show', $evidence)
+        return redirect()->route('evidence.show', $freshEvidence)
             ->with('success', 'Evidence successfully updated.');
     }
 
@@ -333,59 +352,84 @@ class EvidenceController extends Controller
      */
     protected function notifyAdministratorsOfEvidenceChange(Evidence $evidence, array $changes): void
     {
+        // Notify super-admin, all system/institution admins
         $administrators = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['administrator', 'system-administrator']);
-        })->get();
+            $query->whereIn('name', [
+                'super-admin', 'administrator', 'system-administrator',
+                'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin',
+                'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin',
+            ]);
+        })->get()->unique('id');
 
         if ($administrators->isEmpty()) {
             return;
         }
 
-        // Prepare detailed change information
-        $changeDetails = [
-            'evidence_id' => $evidence->id,
-            'evidence_title' => $evidence->title,
-            'case_reference' => $evidence->case_reference,
-            'modified_by' => Auth::user()->name,
-            'modified_at' => now()->toISOString(),
-            'file_updated' => isset($changes['file']),
-            'changes' => $changes,
-        ];
-
-        // Create a more detailed message for hash changes
-        $message = Auth::user()->name . ' modified evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
-
-        if (isset($changes['file'])) {
-            $message .= ' File was replaced with new hash integrity verification.';
+        // Build human-readable list of changed fields
+        $fieldSummary = [];
+        foreach ($changes as $field => $change) {
+            if ($field === '_integrity_hash') continue;
+            if (is_array($change) && isset($change['old'], $change['new'])) {
+                $fieldSummary[] = ucfirst(str_replace('_', ' ', $field))
+                    . ': "' . $change['old'] . '" → "' . $change['new'] . '"';
+            } elseif ($field === 'file' && is_array($change)) {
+                $fieldSummary[] = 'File replaced';
+            }
         }
 
-        // Add hash change details to the message
-        if (isset($changes['file']['old_hash']) && isset($changes['file']['new_hash'])) {
-            $message .= ' Hash changed from ' . substr($changes['file']['old_hash'], 0, 16) . '...' .
-                       ' to ' . substr($changes['file']['new_hash'], 0, 16) . '....';
+        // Hash comparison block
+        $hashInfo = $changes['_integrity_hash'] ?? [];
+        $oldHash  = $hashInfo['old_hash'] ?? null;
+        $newHash  = $hashInfo['new_hash'] ?? null;
+        $hashChanged = $oldHash !== $newHash;
+
+        $message = Auth::user()->name . ' modified evidence "' . $evidence->title
+            . '" (Case Ref: ' . ($evidence->case_reference ?? 'N/A') . ', ID: ' . $evidence->id . ').';
+
+        if (!empty($fieldSummary)) {
+            $message .= ' Changes: ' . implode('; ', $fieldSummary) . '.';
         }
 
-        // Create detailed hash change summary
+        if ($hashChanged && $oldHash && $newHash) {
+            $message .= ' Integrity hash changed — OLD: ' . substr($oldHash, 0, 20) . '...'
+                . ' NEW: ' . substr($newHash, 0, 20) . '...';
+        }
+
         $hashChangeSummary = $this->formatHashChangeSummary($evidence, $changes);
+        $hashChangeSummary['old_content_hash'] = $oldHash;
+        $hashChangeSummary['new_content_hash'] = $newHash;
+        $hashChangeSummary['hash_changed']      = $hashChanged;
 
         $notificationData = [
-            'title' => 'Evidence Integrity Change: ' . $evidence->title,
-            'message' => $message,
-            'action_url' => route('evidence.show', $evidence),
-            'action_text' => 'Review Changes',
-            'details' => $changeDetails,
+            'title'        => '⚠ Evidence Modified: ' . $evidence->title,
+            'message'      => $message,
+            'action_url'   => route('evidence.show', $evidence),
+            'action_text'  => 'Review Changes & Hash History',
+            'details'      => [
+                'evidence_id'    => $evidence->id,
+                'evidence_title' => $evidence->title,
+                'case_reference' => $evidence->case_reference,
+                'modified_by'    => Auth::user()->name,
+                'modified_at'    => now()->toISOString(),
+                'changed_fields' => $fieldSummary,
+                'old_hash'       => $oldHash,
+                'new_hash'       => $newHash,
+                'hash_changed'   => $hashChanged,
+            ],
             'hash_summary' => $hashChangeSummary,
+            'type'         => 'evidence_integrity_change',
         ];
 
         foreach ($administrators as $admin) {
             $admin->notify(new GeneralNotification($notificationData));
         }
 
-        // Also log this security event
         Auth::user()->logActivity('evidence_integrity_notification_sent', 'info', [
-            'evidence_id' => $evidence->id,
+            'evidence_id'             => $evidence->id,
             'notification_recipients' => $administrators->pluck('name')->toArray(),
-            'change_details' => $changeDetails,
+            'old_hash'                => $oldHash,
+            'new_hash'                => $newHash,
+            'hash_changed'            => $hashChanged,
         ]);
     }
 
@@ -483,55 +527,82 @@ class EvidenceController extends Controller
      */
     protected function notifyAdministratorsOfEvidenceCreation(Evidence $evidence): void
     {
-        $administrators = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['administrator', 'system-administrator']);
-        })->get();
+        // Notify all admin roles including super-admin and all institution admins
+        $allAdminRoles = [
+            'super-admin', 'administrator', 'system-administrator',
+            'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin',
+            'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin',
+        ];
+
+        $administrators = User::whereHas('roles', function ($query) use ($allAdminRoles) {
+            $query->whereIn('name', $allAdminRoles);
+        })->get()->unique('id');
 
         if ($administrators->isEmpty()) {
             return;
         }
 
-        // Prepare creation details
+        // Load cross-institution instructions from settings
+        $settingsService = app(\App\Services\SettingsService::class);
+        $crossNotify = $settingsService->get('cross_institution_notify', true);
+        $instructions = $settingsService->get('evidence_instructions', '');
+
+        $uploadingInstitution = $evidence->institution->name ?? 'Unknown Institution';
+
         $creationDetails = [
-            'evidence_id' => $evidence->id,
+            'evidence_id'    => $evidence->id,
             'evidence_title' => $evidence->title,
             'case_reference' => $evidence->case_reference,
             'exhibit_number' => $evidence->exhibit_number,
-            'evidence_type' => $evidence->evidence_type,
+            'evidence_type'  => $evidence->evidence_type,
             'collected_date' => $evidence->collected_date,
-            'created_by' => Auth::user()->name,
-            'created_at' => now()->toISOString(),
-            'file_path' => $evidence->file_path,
-            'file_hash' => $evidence->file_hash,
-            'institution' => $evidence->institution->name ?? null,
-            'department' => $evidence->department->name ?? null,
-            'status' => $evidence->status,
+            'created_by'     => Auth::user()->name,
+            'created_at'     => now()->toISOString(),
+            'file_hash'      => $evidence->file_hash,
+            'institution'    => $uploadingInstitution,
+            'department'     => $evidence->department->name ?? null,
+            'status'         => $evidence->status,
         ];
 
-        $message = Auth::user()->name . ' registered new evidence "' . $evidence->title . '" (ID: ' . $evidence->id . ').';
+        $baseMessage = Auth::user()->name . ' of ' . $uploadingInstitution
+            . ' registered new evidence: "' . $evidence->title . '"'
+            . ' (Case Ref: ' . ($evidence->case_reference ?? 'N/A')
+            . ', Exhibit: ' . ($evidence->exhibit_number ?? 'N/A') . ').';
 
-        if ($evidence->file_path) {
-            $message .= ' Evidence includes a file with integrity hash: ' . substr($evidence->file_hash, 0, 16) . '...';
+        if ($evidence->file_hash) {
+            $baseMessage .= ' Integrity hash: ' . substr($evidence->file_hash, 0, 20) . '...';
         }
-
-        $notificationData = [
-            'title' => 'New Evidence Registered: ' . $evidence->title,
-            'message' => $message,
-            'action_url' => route('evidence.show', $evidence),
-            'action_text' => 'Review Evidence',
-            'details' => $creationDetails,
-            'hash_summary' => null, // No hash summary for creation
-        ];
 
         foreach ($administrators as $admin) {
-            $admin->notify(new GeneralNotification($notificationData));
+            // Personalise message for admins from other institutions
+            $adminInstitution = $admin->institution?->name ?? null;
+            $isSameInstitution = $adminInstitution === $uploadingInstitution;
+
+            $message = $baseMessage;
+
+            // Add cross-institution instructions only when enabled and admin is from another org
+            if ($crossNotify && !empty($instructions) && !empty($adminInstitution) && !$isSameInstitution) {
+                $message .= "
+
+--- Instructions for {$adminInstitution} ---
+" . $instructions;
+            }
+
+            $admin->notify(new GeneralNotification([
+                'title'       => 'New Evidence Uploaded: ' . $evidence->title,
+                'message'     => $message,
+                'action_url'  => route('evidence.show', $evidence),
+                'action_text' => 'Review Evidence',
+                'details'     => $creationDetails,
+                'type'        => $isSameInstitution ? 'evidence_created' : 'cross_institution_evidence',
+                'hash_summary' => null,
+            ]));
         }
 
-        // Also log this security event
         Auth::user()->logActivity('evidence_creation_notification_sent', 'info', [
-            'evidence_id' => $evidence->id,
+            'evidence_id'             => $evidence->id,
             'notification_recipients' => $administrators->pluck('name')->toArray(),
-            'creation_details' => $creationDetails,
+            'cross_institution_notify' => $crossNotify,
         ]);
     }
 

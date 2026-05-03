@@ -3,50 +3,72 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
-    /**
-     * Display the settings page.
-     */
-    public function index()
+    protected SettingsService $settings;
+
+    public function __construct(SettingsService $settings)
     {
-        return view('admin.settings.index');
+        $this->settings = $settings;
     }
 
-    /**
-     * Update system settings.
-     */
+    public function index()
+    {
+        $settings = $this->settings->all();
+
+        try {
+            $dbVersion = DB::select('SELECT sqlite_version() as version')[0]->version ?? 'N/A';
+            $dbDriver = 'SQLite';
+        } catch (\Exception $e) {
+            $dbVersion = 'N/A';
+            $dbDriver = config('database.default', 'unknown');
+        }
+
+        return view('admin.settings.index', compact('settings', 'dbVersion', 'dbDriver'));
+    }
+
     public function update(Request $request)
     {
-        // Validate settings
         $validated = $request->validate([
-            'app_name' => 'required|string|max:255',
-            'app_email' => 'required|email',
-            'items_per_page' => 'required|integer|min:10|max:100',
-            'session_timeout' => 'required|integer|min:5|max:480',
-            'enable_mfa' => 'boolean',
-            'password_expiry_days' => 'required|integer|min:0|max:365',
-            'max_login_attempts' => 'required|integer|min:3|max:20',
+            'app_name'                 => 'required|string|max:255',
+            'app_email'                => 'required|email',
+            'items_per_page'           => 'required|integer|min:10|max:100',
+            'session_timeout'          => 'required|integer|min:5|max:480',
+            'enable_mfa'               => 'nullable',
+            'password_expiry_days'     => 'required|integer|min:0|max:365',
+            'max_login_attempts'       => 'required|integer|min:3|max:20',
             'lockout_duration_minutes' => 'required|integer|min:5|max:120',
+            'evidence_instructions'    => 'nullable|string|max:2000',
+            'cross_institution_notify' => 'nullable',
         ]);
 
-        // Get current settings from config
-        $settings = [
-            'app_name' => config('app.name'),
-            'app_email' => config('mail.from.address'),
-            'items_per_page' => config('app.items_per_page', 50),
-            'session_timeout' => config('session.lifetime', 120),
-            'enable_mfa' => config('auth.mfa_enabled', false),
-            'password_expiry_days' => config('auth.password_expiry_days', 90),
-            'max_login_attempts' => config('auth.max_login_attempts', 5),
-            'lockout_duration_minutes' => config('auth.lockout_duration_minutes', 15),
-        ];
+        $validated['enable_mfa']               = $request->boolean('enable_mfa');
+        $validated['cross_institution_notify'] = $request->boolean('cross_institution_notify');
 
-        // Update settings (in a real app, these would be stored in database)
-        // For now, we'll just return success
-        
-        return redirect()->back()->with('success', 'Settings updated successfully!');
+        $this->settings->set($validated);
+
+        auth()->user()->logActivity('settings_updated', 'success', ['updated_by' => auth()->id()]);
+
+        return redirect()->back()->with('success', 'Settings saved successfully.');
+    }
+
+    public function clearCache()
+    {
+        try {
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            Artisan::call('config:clear');
+
+            auth()->user()->logActivity('cache_cleared', 'success', ['cleared_by' => auth()->id()]);
+
+            return response()->json(['success' => true, 'message' => 'Cache cleared successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to clear cache: ' . $e->getMessage()], 500);
+        }
     }
 }

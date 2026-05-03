@@ -821,11 +821,20 @@
                     </div>
                     
                     <div class="nav-item">
-                        <a href="{{ Auth::user()->can('manage-settings') ? route('settings.index') : '#' }}" class="nav-link {{ Auth::user()->can('manage-settings') ? '' : 'disabled' }}">
+                        <a href="{{ Auth::user()->can('manage-settings') ? route('settings.index') : '#' }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }} {{ Auth::user()->can('manage-settings') ? '' : 'disabled' }}">
                             <i class="bi bi-gear"></i>
                             <span>Settings</span>
                         </a>
                     </div>
+
+                    @if(Auth::user()->can('manage-roles'))
+                    <div class="nav-item">
+                        <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Roles &amp; Permissions</span>
+                        </a>
+                    </div>
+                    @endif
                 </div>
                 @endif
             </nav>
