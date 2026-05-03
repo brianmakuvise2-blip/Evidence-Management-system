@@ -12,6 +12,7 @@ use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\TransferRequestController;
 use App\Http\Controllers\CourtBundleController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ActivityLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     
     // About - Accessible to all authenticated users
     Route::get('/about', [AboutController::class, 'index'])->name('about');
+
+    // My Activity - every authenticated user sees their own actions
+    Route::get('/my-activity', [ActivityLogController::class, 'index'])->name('my-activity.index');
     
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

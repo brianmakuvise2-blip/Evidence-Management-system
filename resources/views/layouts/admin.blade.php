@@ -819,12 +819,21 @@
                         </a>
                     </div>
                     
+                    @if(Auth::user()->can('view-audit-logs'))
                     <div class="nav-item">
-                        <a href="{{ Auth::user()->can('view-audit-logs') ? route('audit-logs.index') : '#' }}" class="nav-link {{ Auth::user()->can('view-audit-logs') ? '' : 'disabled' }}">
+                        <a href="{{ route('audit-logs.index') }}" class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
                             <i class="bi bi-journal-text"></i>
                             <span>Audit Logs</span>
                         </a>
                     </div>
+                    @else
+                    <div class="nav-item">
+                        <a href="{{ route('my-activity.index') }}" class="nav-link {{ request()->routeIs('my-activity.*') ? 'active' : '' }}">
+                            <i class="bi bi-clock-history"></i>
+                            <span>My Activity</span>
+                        </a>
+                    </div>
+                    @endif
                     
                     <div class="nav-item">
                         <a href="{{ Auth::user()->can('manage-settings') ? route('settings.index') : '#' }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }} {{ Auth::user()->can('manage-settings') ? '' : 'disabled' }}">
