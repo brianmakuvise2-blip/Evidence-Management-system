@@ -265,9 +265,7 @@
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
                 <li class="nav-item"><a href="#" class="nav-link active" aria-current="page">Dashboard</a></li>
-                {{-- <li class="nav-item"><a href="#" class="nav-link">Cases</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Audit Trail</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Institutions</a></li> --}}
+             
                 <li class="nav-item ms-lg-2">
                     <a href="/login" class="btn btn-outline-light-custom"><i class="bi bi-box-arrow-in-right me-1"></i>Secure Login</a>
                 </li>
@@ -282,8 +280,8 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="badge bg-light text-dark mb-3 py-2 px-3 rounded-pill"><i class="bi bi-database-check"></i> Zimbabwe Justice Ecosystem</div>
-                <h1 class="hero-title">Centralized Evidence Management <br> For a Transparent Future</h1>
-                <p class="hero-sub mt-3">A secure, immutable platform uniting law enforcement, judiciary, and oversight bodies — ensuring integrity, chain of custody, and operational excellence.</p>
+                <h1 class="hero-title">Centralized Evidence Management <br> Platform</h1>
+                <!-- <p class="hero-sub mt-3">A secure, immutable platform uniting law enforcement, judiciary, and oversight bodies — ensuring integrity, chain of custody, and operational excellence.</p> -->
                 <div class="mt-4 d-flex flex-wrap gap-3 justify-content-center">
                     <a href="#" class="btn btn-light px-4 py-2 rounded-pill fw-semibold"><i class="bi bi-person-plus"></i> Request Demo</a>
                     <a href="#" class="btn btn-outline-light px-4 py-2 rounded-pill"><i class="bi bi-file-earmark-text"></i> Documentation</a>
@@ -293,246 +291,57 @@
     </div>
 </section>
 
-<div class="container mt-4">
-    <!-- Metrics / key stats row (dynamic professional look) -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-files"></i></div>
-                <div class="stat-number">2,847</div>
-                <div class="text-secondary">Active Evidence Items</div>
-                <small class="text-success"><i class="bi bi-arrow-up-short"></i> +12.4%</small>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-building"></i></div>
-                <div class="stat-number">6</div>
-                <div class="text-secondary">Institutions Connected</div>
-                <small>Police · Courts · ACC · NPA</small>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
-                <div class="stat-number">100%</div>
-                <div class="text-secondary">Chain-of-Custody Integrity</div>
-                <small>Blockchain-anchored logs</small>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-                <div class="stat-number">98.6%</div>
-                <div class="text-secondary">Audit Compliance Rate</div>
-                <small>Real-time tracking</small>
-            </div>
-        </div>
-    </div>
+        <div class="col-md-12">
+            <div class="row g-3 text-center mt-2">
 
-    <!-- Central Features: Secure, Centralized, Chain of Custody (expanded) -->
-    <div class="row g-4 mb-5">
-        <div class="col-12 text-center">
-            <h2 class="section-title">Built on Trust & Transparency</h2>
-            <div class="section-divider"></div>
-            <p class="text-secondary col-md-8 mx-auto">Our platform delivers end‑to‑end encryption, role‑based access, and complete evidence lifecycle oversight.</p>
-        </div>
-        <div class="col-md-4">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-lock-fill"></i></div>
-                <h4>Military‑Grade Security</h4>
-                <p class="text-secondary">AES-256 encryption at rest and TLS 1.3 in transit. Granular permissions ensure only authorized personnel access sensitive evidence.</p>
-                <div class="mt-2"><span class="chain-badge"><i class="bi bi-check-circle-fill text-success me-1"></i> FIPS 140-2 compliant</span></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-diagram-3"></i></div>
-                <h4>Unified Central Platform</h4>
-                <p class="text-secondary">Connect Zimbabwe Anti-Corruption Commission, Zimbabwe Republic Police, Judiciary Service Commission, and prosecutors in one seamless ecosystem.</p>
-                <div class="mt-2"><span class="chain-badge"><i class="bi bi-share"></i> Real-time interoperability</span></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-link-45deg"></i></div>
-                <h4>Immutable Chain of Custody</h4>
-                <p class="text-secondary">Every transfer, access, or review is timestamped and logged. Digital signatures and geolocation metadata preserve legal admissibility.</p>
-                <div class="mt-2"><span class="chain-badge"><i class="bi bi-qr-code"></i> NFC/QR handover logs</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chain of Custody & Audit Trail Demo Section (professional mockup) -->
-    <div class="row g-5 align-items-stretch mb-5">
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-journal-bookmark-fill fs-2" style="color:#1e6f5c;"></i>
-                    <h3 class="h4 mb-0 fw-bold">Chain of Custody Timeline</h3>
-                </div>
-                <p class="text-secondary">Live tracking of evidence item #ZIM-8923-24 — “Financial Transaction Records”</p>
-                <div class="audit-log-item">
-                    <small class="text-muted"><i class="bi bi-calendar-event"></i> 12 Oct 2024, 09:14</small>
-                    <div class="fw-semibold">Collected by Det. M. Ncube (ZRP CID)</div>
-                    <div>Location: Harare Central Police Station · Sealed container #E2241</div>
-                </div>
-                <div class="audit-log-item">
-                    <small class="text-muted"><i class="bi bi-arrow-repeat"></i> 15 Oct 2024, 11:30</small>
-                    <div class="fw-semibold">Transferred to Forensic Lab (Government Analyst)</div>
-                    <div>Chain Custody Officer: S. Zhou · Digital signature verified</div>
-                </div>
-                <div class="audit-log-item">
-                    <small class="text-muted"><i class="bi bi-person-badge"></i> 22 Oct 2024, 14:20</small>
-                    <div class="fw-semibold">Viewed by Prosecutor L. Dube (NPA)</div>
-                    <div>Read-only access · Tamper-proof audit trail</div>
-                </div>
-                <div class="mt-2 text-end"><a href="#" class="text-decoration-none">View full history <i class="bi bi-chevron-right"></i></a></div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-fingerprint fs-2" style="color:#1e6f5c;"></i>
-                    <h3 class="h4 mb-0 fw-bold">Audit & Compliance Dashboard</h3>
-                </div>
-                <p class="text-secondary">Real-time oversight dashboard — every access recorded, non-repudiable logs.</p>
-                <div class="mt-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>Evidence Integrity Score</span>
-                        <span class="fw-bold">99.7%</span>
+            <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                        <img  src="{{ asset('images/cityb.png') }}" alt="City of Bulawayo" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">City Of Bulawayo</h6>
+                        <small>Local Authority</small>
                     </div>
-                    <div class="progress mb-3" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 99.7%"></div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                        <img src="{{ asset('images/zrp.png') }}"  alt="ZRP" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">Zimbabwe Republic Police</h6>
+                        <small>National Police Force of Zimbabwe</small>
                     </div>
-                    <ul class="list-unstyled mt-3">
-                        <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i> 2,431 evidence items with verified chain logs</li>
-                        <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i> 0 integrity breaches (last 12 months)</li>
-                        <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i> Full court-admissible audit reports (PDF/CSV)</li>
-                        <li><i class="bi bi-shield-plus me-2"></i> Multi-factor authentication enforced</li>
-                    </ul>
-                    <a href="#" class="btn btn-sm btn-outline-secondary rounded-pill mt-2">Generate compliance report</a>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Institutional integration / ecosystem map -->
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h2 class="section-title">United Justice Ecosystem</h2>
-            <div class="section-divider"></div>
-            <p class="text-secondary">Connecting key Zimbabwean institutions for seamless evidence collaboration</p>
-        </div>
-       <div class="col-md-12">
-    <div class="row g-3 text-center mt-2">
-
-        <div class="col-md-3 col-6">
-            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                <img src="{{ asset('images/zrp.jpg') }}" 
-                     class="img-fluid mb-2" 
-                     style="height:60px;">
-                <h6 class="mt-2">Zimbabwe Republic Police</h6>
-                <small>Investigation & seizure</small>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-6">
-            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                <img src="{{ asset('images/dcy.jpg') }}" 
-                     class="img-fluid mb-2" 
-                     style="height:60px;">
-                <h6 class="mt-2">Judiciary of Zimbabwe</h6>
-                <small>Court evidence management</small>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-6">
-            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                <img src="{{ asset('images/npa.jpg') }}" 
-                     class="img-fluid mb-2" 
-                     style="height:60px;">
-                <h6 class="mt-2">National Prosecuting Authority</h6>
-                <small>Case preparation & review</small>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-6">
-            <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                <img src="{{ asset('images/anticorruption.jpg') }}" 
-                     class="img-fluid mb-2" 
-                     style="height:60px;">
-                <h6 class="mt-2">ZACC & Anti-Corruption</h6>
-                <small>Forensic evidence tracking</small>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-    <!-- CTA for system access and security assurance -->
-    {{-- <div class="cta-section mb-5">
-        <div class="row align-items-center">
-            <div class="col-lg-7">
-                <h3 class="fw-bold">Empower justice with verifiable evidence integrity</h3>
-                <p class="mb-0 mt-2">Join Zimbabwe's leading digital transformation in evidence governance. Role-based dashboards, court-ready reporting, and 24/7 monitoring.</p>
-                <div class="mt-3 d-flex flex-wrap gap-3">
-                    <a href="/login" class="btn btn-primary-custom text-white"><i class="bi bi-key"></i> Access secure portal</a>
-                    <a href="#" class="btn btn-outline-accent"><i class="bi bi-calendar-week"></i> Schedule advisory</a>
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                       <img  src="{{ asset('images/jsc.png') }}" alt="Judiciary" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">Judiciary of Zimbabwe</h6>
+                        <small>Administration of Justice</small>
+                    </div>
                 </div>
-            </div>
-            <div class="col-lg-5 text-center mt-4 mt-lg-0">
-                <i class="bi bi-shield-lock-fill" style="font-size: 4rem; color: #1e6f5c;"></i>
-                <p class="mt-2 small">Audited by independent cybersecurity partners</p>
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                        <img  src="{{ asset('images/npa.png') }}" alt="NPA" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">National Prosecuting Authority</h6>
+                        <small>Prosecution of Crimes</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                        <img  src="{{ asset('images/zacc.png') }}" alt="ZACC" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">ZACC & Anti-Corruption</h6>
+                        <small>Forensic evidence tracking</small>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
+                        <img  src="{{ asset('images/rbz.png') }}" alt="RBZ" class="img-fluid mb-2" style="max-height:80px;">
+                        <h6 class="mt-2">RBZ</h6>
+                        <small>Banker of Banks</small>
+                    </div>
+                </div>
+
+                
             </div>
         </div>
-    </div>
-</div> --}}
-
-{{-- <!-- Footer with professional links and copyright -->
-<footer class="pt-5 pb-4 mt-4">
-    <div class="container">
-        <div class="row gy-4">
-            <div class="col-md-4">
-                <h5 class="text-white mb-3"><i class="bi bi-shield-shaded"></i> Evidence Management System</h5>
-                <p class="small">A centralized, secure digital platform serving Zimbabwe's justice and governance ecosystem. Chain-of-custody, transparency, and operational resilience.</p>
-            </div>
-            <div class="col-md-2 col-6">
-                <h6 class="text-white-50">Platform</h6>
-                <ul class="list-unstyled">
-                    <li><a href="#" class="text-white-50 text-decoration-none small">Features</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">Security</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">Compliance</a></li>
-                </ul>
-            </div>
-            <div class="col-md-2 col-6">
-                <h6 class="text-white-50">Institutions</h6>
-                <ul class="list-unstyled">
-                    <li><a href="#" class="text-white-50 text-decoration-none small">ZRP</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">Judiciary</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">NPA</a></li>
-                </ul>
-            </div>
-            {{-- <div class="col-md-4">
-                <h6 class="text-white-50">Support & Legal</h6>
-                <ul class="list-unstyled">
-                    <li><a href="#" class="text-white-50 text-decoration-none small">helpdesk@evidence.gov.zw</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">+263 242 123 456</a></li>
-                    <li><a href="#" class="text-white-50 text-decoration-none small">Privacy & Data Protection</a></li>
-                </ul>
-            </div> --}}
-        {{-- </div>
-        <hr class="mt-4 mb-3 bg-secondary">
-        <div class="row">
-            <div class="col-md-6 text-center text-md-start small">
-                © 2026 Evidence Management System — Zimbabwe. All rights reserved. Version 2.4
-            </div>
-            <div class="col-md-6 text-center text-md-end small">
-                <i class="bi bi-database-check"></i> Chain of Custody Certified | ISO 27001 Framework
-            </div>
-        </div> --}}
-    {{-- </div>
-</footer> --}} 
 
 <!-- Bootstrap JS Bundle for interactive components -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
