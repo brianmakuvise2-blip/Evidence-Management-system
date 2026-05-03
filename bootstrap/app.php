@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies (needed for Replit's HTTPS proxy)
+        $middleware->trustProxies(at: '*');
+
         // Register role-based access control middleware
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckUserRole::class,
