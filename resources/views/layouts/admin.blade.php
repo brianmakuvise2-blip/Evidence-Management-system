@@ -819,7 +819,7 @@
                         </a>
                     </div>
                     
-                    @if(Auth::user()->can('view-audit-logs'))
+                    @if(Auth::user()->hasAnyRole(['super-admin','administrator','system-administrator','rbz-system-admin','zacc-system-admin','npa-system-admin','zrp-system-admin','judicial-system-admin','judicial-courts-admin']))
                     <div class="nav-item">
                         <a href="{{ route('audit-logs.index') }}" class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
                             <i class="bi bi-journal-text"></i>
