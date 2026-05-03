@@ -193,7 +193,7 @@
                     </h6>
                     <ul class="list-unstyled small" style="line-height: 1.8;">
                         <li><strong>Record Reference:</strong> Link evidence to a specific record for organization</li>
-                        <li><strong>Exhibit Number:</strong> Unique identifier for this piece of evidence in the case</li>
+                        <li><strong>Exhibit Number:</strong> Unique identifier for this piece of evidence in the record</li>
                         <li><strong>Title:</strong> Use a clear, descriptive title that summarizes the evidence</li>
                         <li><strong>Collection Date:</strong> Record the exact date and time of collection</li>
                         <li><strong>Evidence Type:</strong> Select the most appropriate category</li>

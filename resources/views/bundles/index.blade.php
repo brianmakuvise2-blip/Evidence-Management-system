@@ -7,7 +7,7 @@
             <h1 class="h3 mb-0">
                 <i class="bi bi-folder2-open"></i> Court Bundles
             </h1>
-            <p class="text-muted mt-2">Prepare and review court bundles for case prosecution.</p>
+            <p class="text-muted mt-2">Prepare and review court bundles for record prosecution.</p>
         </div>
         <div class="col-auto">
             @can('prepare-bundle')
