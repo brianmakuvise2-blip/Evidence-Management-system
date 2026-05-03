@@ -732,7 +732,7 @@ class EvidenceController extends Controller
     public function verify(Request $request, Evidence $evidence)
     {
         // Check authorization
-        if (!Auth::user()->can('verify-evidence')) {
+        if (!Auth::user()->hasAnyRole('super-admin', 'administrator', 'system-administrator', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin')) {
             return redirect()->route('evidence.show', $evidence)
                 ->with('error', 'You are not authorized to verify evidence.');
         }
