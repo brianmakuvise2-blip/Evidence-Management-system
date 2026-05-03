@@ -7,6 +7,7 @@ export QUEUE_CONNECTION=sync
 export SESSION_SECURE_COOKIE=true
 export SESSION_SAME_SITE=none
 export APP_URL="https://${REPLIT_DEV_DOMAIN}"
+export APP_TIMEZONE=Africa/Harare
 php artisan config:clear
 php artisan view:clear
 php artisan serve --host=0.0.0.0 --port=5000
