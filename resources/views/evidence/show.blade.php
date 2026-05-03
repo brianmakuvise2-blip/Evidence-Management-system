@@ -288,7 +288,7 @@
                                     } }}">{{ ucfirst(str_replace('_', ' ', $entry->change_type)) }}</span>
                                 </td>
                                 <td>
-                                    <code class="small">{{ $entry->content_hash ?? '—' }}</code>
+                                    <code class="small {{ $isLatest ? 'text-success fw-semibold' : '' }}">{{ $entry->content_hash ?? '—' }}</code>
                                     @if($entry->previous_state && isset($entry->previous_state['content_hash']) && $entry->previous_state['content_hash'] !== $entry->content_hash)
                                         <br><small class="text-muted">← <span class="text-danger font-monospace" style="font-size:.7rem;">{{ $entry->previous_state['content_hash'] }}</span></small>
                                     @endif
