@@ -263,7 +263,7 @@
                 @endif
 
                 <!-- Login Form -->
-                <form method="POST" action="{{ route('login') }}" novalidate>
+                <form method="POST" action="/login" novalidate>
                     @csrf
 
                     <div class="mb-3">
