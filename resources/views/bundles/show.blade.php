@@ -22,7 +22,7 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <h6 class="text-muted">Case Reference</h6>
+                            <h6 class="text-muted">Record Reference</h6>
                             <p>{{ $bundle->case_reference }}</p>
                         </div>
                         <div class="col-md-6">

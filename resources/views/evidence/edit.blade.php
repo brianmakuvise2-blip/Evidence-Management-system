@@ -39,11 +39,11 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        {{-- Case Reference --}}
+                        {{-- Record Reference --}}
                         <div class="mb-3">
-                            <label for="case_reference" class="form-label">Case Reference <small class="text-muted">(Optional)</small></label>
+                            <label for="case_reference" class="form-label">Record Reference <small class="text-muted">(Optional)</small></label>
                             <input type="text" id="case_reference" name="case_reference" class="form-control @error('case_reference') is-invalid @enderror"
-                                   placeholder="e.g., CASE-2026-001" value="{{ old('case_reference', $evidence->case_reference) }}">
+                                   placeholder="e.g., REC-2026-001" value="{{ old('case_reference', $evidence->case_reference) }}">
                             @error('case_reference')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

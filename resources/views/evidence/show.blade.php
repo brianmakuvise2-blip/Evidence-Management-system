@@ -58,7 +58,7 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <h6 class="text-muted fs-xs">Case Reference</h6>
+                            <h6 class="text-muted fs-xs">Record Reference</h6>
                             <p class="fs-5">{{ $evidence->case_reference ?? '-' }}</p>
                         </div>
                         <div class="col-md-6">

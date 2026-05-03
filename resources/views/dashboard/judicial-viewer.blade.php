@@ -94,7 +94,7 @@
                                     </div>
                                     <p class="mb-1">{{ Str::limit($bundle->description, 60) }}</p>
                                     <small class="text-muted">
-                                        Case: {{ $bundle->case_reference }} •
+                                        Record: {{ $bundle->case_reference }} •
                                         Shared: {{ $bundle->updated_at->format('M d, Y') }}
                                     </small>
                                 </a>
@@ -126,7 +126,7 @@
                                 <thead>
                                     <tr>
                                         <th>Bundle Title</th>
-                                        <th>Case Reference</th>
+                                        <th>Record Reference</th>
                                         <th>Prepared By</th>
                                         <th>Approved Date</th>
                                         <th>Actions</th>

@@ -22,8 +22,8 @@
         <div class="card-body">
             <form method="GET" action="{{ route('bundles.index') }}" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Case Reference</label>
-                    <input type="text" class="form-control" name="case_reference" value="{{ request('case_reference') }}" placeholder="Case reference">
+                    <label class="form-label">Record Reference</label>
+                    <input type="text" class="form-control" name="case_reference" value="{{ request('case_reference') }}" placeholder="Record reference">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Bundle Title</label>
@@ -52,7 +52,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Title</th>
-                            <th>Case Reference</th>
+                            <th>Record Reference</th>
                             <th>Version</th>
                             <th>Status</th>
                             <th>Prepared By</th>

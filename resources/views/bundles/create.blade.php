@@ -36,7 +36,7 @@
                         <input type="text" name="title" value="{{ old('title') }}" class="form-control" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Case Reference</label>
+                        <label class="form-label">Record Reference</label>
                         <input type="text" name="case_reference" value="{{ old('case_reference') }}" class="form-control" required>
                     </div>
                     <div class="col-12">
@@ -63,7 +63,7 @@
                                         </label>
                                     </div>
 
-                                    <p class="mb-1"><span class="text-muted">Case:</span> {{ $item->case_reference ?? 'N/A' }}</p>
+                                    <p class="mb-1"><span class="text-muted">Record:</span> {{ $item->case_reference ?? 'N/A' }}</p>
                                     <p class="mb-1"><span class="text-muted">Status:</span> {{ $item->getStatusDisplay() }}</p>
                                     <p class="mb-1"><span class="text-muted">Institution:</span> {{ $item->institution?->name ?? 'Unknown' }}</p>
                                 </div>

@@ -102,7 +102,7 @@
                                         </small>
                                     </div>
                                     <p class="mb-1">{{ Str::limit($bundle->description, 60) }}</p>
-                                    <small class="text-muted">Case: {{ $bundle->case_reference }} • Created: {{ $bundle->created_at->format('M d, Y') }}</small>
+                                    <small class="text-muted">Record: {{ $bundle->case_reference }} • Created: {{ $bundle->created_at->format('M d, Y') }}</small>
                                 </a>
                             @endforeach
                         </div>

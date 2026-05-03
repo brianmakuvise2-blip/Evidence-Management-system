@@ -38,11 +38,11 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        {{-- Case Reference --}}
+                        {{-- Record Reference --}}
                         <div class="mb-3">
-                            <label for="case_reference" class="form-label">Case Reference <small class="text-muted">(Optional)</small></label>
+                            <label for="case_reference" class="form-label">Record Reference <small class="text-muted">(Optional)</small></label>
                             <input type="text" id="case_reference" name="case_reference" class="form-control @error('case_reference') is-invalid @enderror"
-                                   placeholder="e.g., CASE-2026-001" value="{{ old('case_reference') }}">
+                                   placeholder="e.g., REC-2026-001" value="{{ old('case_reference') }}">
                             @error('case_reference')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -192,7 +192,7 @@
                         <i class="bi bi-lightbulb"></i> Tips for Registration
                     </h6>
                     <ul class="list-unstyled small" style="line-height: 1.8;">
-                        <li><strong>Case Reference:</strong> Link evidence to a specific case for organization</li>
+                        <li><strong>Record Reference:</strong> Link evidence to a specific record for organization</li>
                         <li><strong>Exhibit Number:</strong> Unique identifier for this piece of evidence in the case</li>
                         <li><strong>Title:</strong> Use a clear, descriptive title that summarizes the evidence</li>
                         <li><strong>Collection Date:</strong> Record the exact date and time of collection</li>

@@ -29,9 +29,9 @@
                 </div>
 
                 <div class="col-lg-4 col-md-6">
-                    <label for="case_reference" class="form-label">Case Reference</label>
+                    <label for="case_reference" class="form-label">Record Reference</label>
                     <input type="text" class="form-control" id="case_reference" name="case_reference"
-                           placeholder="CASE-2026-001" value="{{ request('case_reference') }}">
+                           placeholder="REC-2026-001" value="{{ request('case_reference') }}">
                 </div>
 
                 <div class="col-lg-4 col-md-6">
@@ -135,7 +135,7 @@
                                     <a href="{{ route('evidence.show', $item) }}" class="text-decoration-none">
                                         <h5 class="mb-1">{{ Str::limit($item->title, 50) }}</h5>
                                     </a>
-                                    <p class="mb-0 text-muted">{{ $item->case_reference ?? 'No case reference' }}</p>
+                                    <p class="mb-0 text-muted">{{ $item->case_reference ?? 'No record reference' }}</p>
                                 </div>
                                 <span class="badge {{ $item->getStatusBadgeClass() }}">
                                     {{ $item->getStatusDisplay() }}
