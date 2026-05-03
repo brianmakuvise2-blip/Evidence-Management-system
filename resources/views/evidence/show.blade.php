@@ -266,7 +266,7 @@
                                 <th style="width:110px;">Event</th>
                                 <th>Content Hash (SHA-256)</th>
                                 <th style="width:130px;">Changed By</th>
-                                <th style="width:90px;">Status</th>
+                                <th style="width:110px; white-space:nowrap;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -302,13 +302,13 @@
                                     @endif
                                 </td>
                                 <td class="small">{{ $entry->user?->name ?? '—' }}</td>
-                                <td>
+                                <td style="white-space:nowrap;">
                                     @if($entry->tampering_detected)
                                         <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tampered</span>
                                     @elseif($isLatest)
                                         <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Current</span>
                                     @else
-                                        <span class="badge bg-light text-dark border">Historic</span>
+                                        <span class="badge bg-secondary">Historic</span>
                                     @endif
                                 </td>
                             </tr>

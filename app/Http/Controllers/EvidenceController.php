@@ -990,24 +990,31 @@ class EvidenceController extends Controller
         $contentHash = null;
         $metadataHash = null;
 
-        // Generate content hash
+        // Generate content hash — always includes ALL key metadata so any
+        // field change (title, case ref, description, etc.) produces a new hash.
+        $fileHash = null;
         if ($evidence->file_path) {
             $filePath = storage_path('app/evidence/' . $evidence->file_path);
             if (file_exists($filePath)) {
-                $contentHash = hash_file('sha256', $filePath);
+                $fileHash = hash_file('sha256', $filePath);
             }
-        } else {
-            // For non-file evidence, hash key attributes
-            $contentData = [
-                'title' => $evidence->title,
-                'description' => $evidence->description,
-                'evidence_type' => $evidence->evidence_type,
-                'collected_date' => $evidence->collected_date?->toISOString(),
-                'source' => $evidence->source,
-                'location_found' => $evidence->location_found,
-            ];
-            $contentHash = hash('sha256', json_encode($contentData));
         }
+
+        $contentData = [
+            'file_hash'            => $fileHash ?? $evidence->file_hash,
+            'title'                => $evidence->title,
+            'case_reference'       => $evidence->case_reference,
+            'exhibit_number'       => $evidence->exhibit_number,
+            'evidence_type'        => $evidence->evidence_type,
+            'description'          => $evidence->description,
+            'collected_date'       => $evidence->collected_date?->toISOString(),
+            'source'               => $evidence->source,
+            'location_found'       => $evidence->location_found,
+            'classification_level' => $evidence->classification_level,
+            'institution_id'       => $evidence->institution_id,
+            'department_id'        => $evidence->department_id,
+        ];
+        $contentHash = hash('sha256', json_encode($contentData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         // Hash metadata
         if ($evidence->metadata) {
