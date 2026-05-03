@@ -103,12 +103,12 @@
                         <a href="{{ route('admin.users.index') }}" class="btn btn-primary">
                             <i class="bi bi-people me-2"></i>Manage Users
                         </a>
-                        <button class="btn btn-outline-primary" disabled>
+                        <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-primary">
                             <i class="bi bi-shield-check me-2"></i>Manage Roles
-                        </button>
-                        <button class="btn btn-outline-primary" disabled>
+                        </a>
+                        <a href="{{ route('settings.index') }}" class="btn btn-outline-primary">
                             <i class="bi bi-sliders me-2"></i>System Settings
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -126,9 +126,9 @@
                         <a href="{{ route('admin.users.create') }}" class="btn btn-success">
                             <i class="bi bi-plus-circle me-2"></i>Create User
                         </a>
-                        <button class="btn btn-outline-secondary" disabled>
+                        <a href="{{ route('admin.users.index', ['status' => 'archived']) }}" class="btn btn-outline-secondary">
                             <i class="bi bi-archive me-2"></i>View Archives
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -143,9 +143,9 @@
                 <div class="card-body">
                     <p class="text-muted mb-3">Monitor system security and activity logs</p>
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" disabled>
+                        <a href="{{ route('audit-logs.index') }}" class="btn btn-outline-primary">
                             <i class="bi bi-clock-history me-2"></i>View Audit Logs
-                        </button>
+                        </a>
                         <a href="{{ route('reports.index') }}" class="btn btn-outline-primary">
                             <i class="bi bi-graph-up me-2"></i>Security Reports
                         </a>
