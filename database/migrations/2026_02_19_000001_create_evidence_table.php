@@ -62,7 +62,9 @@ return new class extends Migration
             $table->index(['status', 'evidence_type']);
             $table->index(['institution_id', 'department_id']);
             $table->index(['collected_date']);
-            $table->fullText(['title', 'description', 'case_reference']);
+            if (config('database.default') !== 'sqlite') {
+                $table->fullText(['title', 'description', 'case_reference']);
+            }
         });
     }
 

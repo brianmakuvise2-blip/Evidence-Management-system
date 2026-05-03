@@ -1,0 +1,48 @@
+modules = ["php-8.2"]
+[nix]
+channel = "stable-25_05"
+
+[agent]
+expertMode = true
+
+[[ports]]
+localPort = 3306
+externalPort = 3000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+DB_CONNECTION = "sqlite"
+DB_DATABASE = "/home/runner/workspace/database/database.sqlite"
+SESSION_DRIVER = "file"
+CACHE_STORE = "file"
+QUEUE_CONNECTION = "sync"
+APP_URL = "http://0.0.0.0:8000"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash start.sh"
+waitForPort = 5000
