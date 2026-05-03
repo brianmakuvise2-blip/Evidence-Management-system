@@ -779,12 +779,18 @@
                         </div>
                     @endif
 
-                    @if(Auth::user()->hasAnyRole(['administrator', 'system-administrator']))
+                    @if(Auth::user()->hasAnyRole(['super-admin', 'administrator', 'system-administrator']))
                     <div class="nav-item">
                         <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                             <i class="bi bi-people"></i>
                             <span>Users</span>
                         </a>
+                        <div class="ps-4 mt-1">
+                            <a href="{{ route('admin.users.create') }}" class="nav-link py-1" style="font-size:0.875rem; color: var(--gray-500);">
+                                <i class="bi bi-person-plus" style="font-size:1rem;"></i>
+                                <span>Create User</span>
+                            </a>
+                        </div>
                     </div>
                     @endif
                 </div>
