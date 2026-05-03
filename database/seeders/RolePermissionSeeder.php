@@ -72,6 +72,7 @@ class RolePermissionSeeder extends Seeder
             'dispose-evidence',
             'register-seizure',
             'retrieve-evidence',
+            'verify-evidence',
         ];
 
         foreach ($permissions as $permission) {
@@ -111,6 +112,7 @@ class RolePermissionSeeder extends Seeder
             'dispose-evidence',
             'register-seizure',
             'retrieve-evidence',
+            'verify-evidence',
         ]);
 
         // RBZ System Admin - Limited evidence registration with audit logs
@@ -127,6 +129,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // ZACC System Admin - Limited evidence registration with audit logs
@@ -143,6 +146,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // NPA System Admin - Retrieve evidence for prosecution and trial preparation
@@ -163,6 +167,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // ZRP System Admin - Register seizure docs and exhibits
@@ -180,6 +185,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // Judicial System Admin - Access approved evidence bundles and orders
@@ -192,6 +198,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // Judicial Courts Admin - Archive, retention, disposal of evidence
@@ -207,6 +214,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // Legacy System Administrator - Management Only (NOT operational approvals)
@@ -224,6 +232,7 @@ class RolePermissionSeeder extends Seeder
             'view-audit-logs',
             'view-reports',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // Legacy Administrator - User Management
@@ -239,6 +248,7 @@ class RolePermissionSeeder extends Seeder
             'view-reports',
             'view-audit-logs',
             'manage-notifications',
+            'verify-evidence',
         ]);
 
         // Source Officer - Create & upload evidence
