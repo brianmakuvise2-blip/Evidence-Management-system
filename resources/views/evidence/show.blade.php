@@ -35,7 +35,7 @@
         </div>
         <div class="col-auto">
             @if(!$evidence->trashed())
-                @if($evidence->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator'))
+                @if($evidence->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator', 'super-admin', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin'))
                     <a href="{{ route('evidence.edit', $evidence) }}" class="btn btn-outline-warning me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
@@ -334,7 +334,7 @@
         {{-- Sidebar --}}
         <div class="col-lg-4">
             {{-- Quick Actions Card --}}
-            @if(Auth::user()->hasAnyRole('administrator', 'system-administrator') && !$evidence->trashed())
+            @if(Auth::user()->hasAnyRole('administrator', 'system-administrator', 'super-admin', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin') && !$evidence->trashed())
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-light">
                         <h5 class="card-title mb-0">
@@ -411,7 +411,7 @@
 </div>
 
 {{-- Verify Evidence Modal --}}
-@if(Auth::user()->hasAnyRole('administrator', 'system-administrator') && !$evidence->trashed())
+@if(Auth::user()->hasAnyRole('administrator', 'system-administrator', 'super-admin', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin') && !$evidence->trashed())
     <div class="modal fade" id="verifyModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

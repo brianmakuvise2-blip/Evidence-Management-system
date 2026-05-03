@@ -10,7 +10,7 @@
             <p class="text-muted mt-2">Manage and track all evidence in the system</p>
         </div>
         <div class="col-auto">
-            @if(Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator'))
+            @if(Auth::user()->hasAnyRole('source-officer', 'evidence-officer', 'administrator', 'system-administrator', 'super-admin', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin'))
                 <a href="{{ route('evidence.create') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Register Evidence
                 </a>
@@ -174,7 +174,7 @@
                                 <a href="{{ route('evidence.show', $item) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
-                                @if($item->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator'))
+                                @if($item->status !== 'verified' && Auth::user()->hasAnyRole('evidence-officer', 'administrator', 'system-administrator', 'super-admin', 'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin', 'zrp-system-admin', 'judicial-system-admin'))
                                     <a href="{{ route('evidence.edit', $item) }}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil"></i>
                                     </a>

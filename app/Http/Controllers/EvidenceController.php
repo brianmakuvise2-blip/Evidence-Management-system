@@ -474,8 +474,12 @@ class EvidenceController extends Controller
     protected function notifyAdministratorsOfEvidenceDeletion(Evidence $evidence): void
     {
         $administrators = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['administrator', 'system-administrator']);
-        })->get();
+            $query->whereIn('name', [
+                'super-admin', 'administrator', 'system-administrator',
+                'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin',
+                'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin',
+            ]);
+        })->get()->unique('id');
 
         if ($administrators->isEmpty()) {
             return;
@@ -611,8 +615,12 @@ class EvidenceController extends Controller
     protected function notifyAdministratorsOfEvidenceVerification(Evidence $evidence, string $action, ?string $notes): void
     {
         $administrators = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['administrator', 'system-administrator']);
-        })->get();
+            $query->whereIn('name', [
+                'super-admin', 'administrator', 'system-administrator',
+                'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin',
+                'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin',
+            ]);
+        })->get()->unique('id');
 
         if ($administrators->isEmpty()) {
             return;
@@ -671,8 +679,12 @@ class EvidenceController extends Controller
     protected function notifyAdministratorsOfEvidenceArchiving(Evidence $evidence): void
     {
         $administrators = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['administrator', 'system-administrator']);
-        })->get();
+            $query->whereIn('name', [
+                'super-admin', 'administrator', 'system-administrator',
+                'rbz-system-admin', 'zacc-system-admin', 'npa-system-admin',
+                'zrp-system-admin', 'judicial-system-admin', 'judicial-courts-admin',
+            ]);
+        })->get()->unique('id');
 
         if ($administrators->isEmpty()) {
             return;
