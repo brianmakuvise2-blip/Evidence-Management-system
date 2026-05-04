@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -125,17 +126,31 @@ class UserManagementController extends Controller
                 ]);
 
                 $user->syncRoles($request->roles);
-                $user->logActivity('user_created', 'success', [
-                    'created_by' => auth()->id()
-                ]);
 
                 return $user;
             });
+
+            // Audit logging should not block the user creation if it fails.
+            try {
+                $user->logActivity('user_created', 'success', [
+                    'created_by' => auth()->id()
+                ]);
+            } catch (\Throwable $logException) {
+                Log::warning('Failed to write user_created activity log', [
+                    'user_id' => $user->id,
+                    'exception' => $logException->getMessage(),
+                ]);
+            }
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User created successfully.');
                 
         } catch (\Exception $e) {
+            Log::error('User creation failed', [
+                'exception' => $e->getMessage(),
+                'request' => $request->except('password', 'password_confirmation'),
+            ]);
+
             return back()->withInput()
                 ->with('error', 'Failed to create user. Please try again.');
         }

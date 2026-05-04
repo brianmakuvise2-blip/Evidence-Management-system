@@ -233,11 +233,18 @@ Route::prefix('api')->group(function () {
         return $institution->departments()->select('id', 'name', 'code')->get();
     });
 
-    // Get officers (users with acknowledge-receipt permission) by institution
+    // Get officers (users authorized to receive transfers) by institution
     Route::get('/institutions/{institution}/officers', function (\App\Models\Institution $institution) {
-        return $institution->users()
-            ->select('users.id', 'users.name', 'departments.name as department')
-            ->join('departments', 'users.department_id', '=', 'departments.id')
-            ->get();
+        return \App\Models\User::permission('acknowledge-receipt')
+            ->where('institution_id', $institution->id)
+            ->with('department:id,name')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'department' => $user->department->name ?? 'Unknown',
+                ];
+            });
     });
 });
