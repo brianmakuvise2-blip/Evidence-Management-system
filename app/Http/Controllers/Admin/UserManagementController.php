@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
@@ -104,29 +105,32 @@ class UserManagementController extends Controller
         ]);
 
         try {
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'employee_id' => $request->employee_id,
-                'badge_number' => $request->badge_number,
-                'institution_id' => $request->institution_id,
-                'department_id' => $request->department_id,
-                'job_title' => $request->job_title,
-                'phone_work' => $request->phone_work,
-                'phone_mobile' => $request->phone_mobile,
-                'data_access_scope' => $request->data_access_scope,
-                'account_status' => 'active',
-                'password_changed_at' => now(),
-                'last_password_change_at' => now(),
-                'password_expires_at' => now()->addDays(90), // Password expires in 90 days
-            ]);
+            $user = DB::transaction(function () use ($request) {
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'employee_id' => $request->employee_id,
+                    'badge_number' => $request->badge_number,
+                    'institution_id' => $request->institution_id,
+                    'department_id' => $request->department_id,
+                    'job_title' => $request->job_title,
+                    'phone_work' => $request->phone_work,
+                    'phone_mobile' => $request->phone_mobile,
+                    'data_access_scope' => $request->data_access_scope,
+                    'account_status' => 'active',
+                    'password_changed_at' => now(),
+                    'last_password_change_at' => now(),
+                    'password_expires_at' => now()->addDays(90), // Password expires in 90 days
+                ]);
 
-            $user->syncRoles($request->roles);
-            
-            $user->logActivity('user_created', 'success', [
-                'created_by' => auth()->id()
-            ]);
+                $user->syncRoles($request->roles);
+                $user->logActivity('user_created', 'success', [
+                    'created_by' => auth()->id()
+                ]);
+
+                return $user;
+            });
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User created successfully.');
