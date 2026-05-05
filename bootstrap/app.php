@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust all proxies (needed for Replit's HTTPS proxy)
         $middleware->trustProxies(at: '*');
 
+        // Convert empty form strings to null so unique-nullable DB columns work correctly
+        $middleware->convertEmptyStringsToNull();
+
         // Register role-based access control middleware
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckUserRole::class,

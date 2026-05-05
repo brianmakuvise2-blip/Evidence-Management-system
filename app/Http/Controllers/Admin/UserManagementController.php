@@ -111,8 +111,8 @@ class UserManagementController extends Controller
                     'name' => $request->name,
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
-                    'employee_id' => $request->employee_id,
-                    'badge_number' => $request->badge_number,
+                    'employee_id' => $request->employee_id ?: null,
+                    'badge_number' => $request->badge_number ?: null,
                     'institution_id' => $request->institution_id,
                     'department_id' => $request->department_id,
                     'job_title' => $request->job_title,
@@ -148,11 +148,15 @@ class UserManagementController extends Controller
         } catch (\Exception $e) {
             Log::error('User creation failed', [
                 'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'request' => $request->except('password', 'password_confirmation'),
             ]);
 
-            return back()->withInput()
-                ->with('error', 'Failed to create user. Please try again.');
+            $message = config('app.debug')
+                ? 'Failed to create user: ' . $e->getMessage()
+                : 'Failed to create user. Please try again.';
+
+            return back()->withInput()->with('error', $message);
         }
     }
 
@@ -204,7 +208,10 @@ class UserManagementController extends Controller
         ]);
 
         try {
-            $user->update($request->except('roles'));
+            $user->update(array_merge($request->except('roles'), [
+                'employee_id' => $request->employee_id ?: null,
+                'badge_number' => $request->badge_number ?: null,
+            ]));
 
             if ($request->has('roles')) {
                 $user->syncRoles($request->roles);
