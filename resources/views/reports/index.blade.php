@@ -57,7 +57,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Evidence Status Distribution</h5>
-                    <a href="{{ route('reports.export', ['report' => 'evidence']) }}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
+                    <a href="{{ route('reports.export', ['report' => 'evidence']) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
                 </div>
                 <div class="card-body">
                     <canvas id="evidenceStatusChart" height="220"></canvas>
@@ -72,10 +72,10 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group">
-                        <a href="{{ route('reports.export', ['report' => 'overview']) }}" class="list-group-item list-group-item-action">Export Overview</a>
-                        <a href="{{ route('reports.export', ['report' => 'transfers']) }}" class="list-group-item list-group-item-action">Export Transfer Status</a>
-                        <a href="{{ route('reports.export', ['report' => 'bundles']) }}" class="list-group-item list-group-item-action">Export Bundle Status</a>
-                        <a href="{{ route('reports.export', ['report' => 'activity']) }}" class="list-group-item list-group-item-action">Export Recent Activity</a>
+                        <a href="{{ route('reports.export', ['report' => 'overview']) }}" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-pdf me-2"></i>Export Overview PDF</a>
+                        <a href="{{ route('reports.export', ['report' => 'transfers']) }}" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-pdf me-2"></i>Export Transfer Status PDF</a>
+                        <a href="{{ route('reports.export', ['report' => 'bundles']) }}" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-pdf me-2"></i>Export Bundle Status PDF</a>
+                        <a href="{{ route('reports.export', ['report' => 'activity']) }}" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-pdf me-2"></i>Export Recent Activity PDF</a>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Transfer Status Breakdown</h5>
-                    <a href="{{ route('reports.export', ['report' => 'transfers']) }}" class="btn btn-sm btn-outline-secondary">Export</a>
+                    <a href="{{ route('reports.export', ['report' => 'transfers']) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
                 </div>
                 <div class="card-body">
                     <ul class="list-group">
@@ -106,7 +106,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Bundle Status Breakdown</h5>
-                    <a href="{{ route('reports.export', ['report' => 'bundles']) }}" class="btn btn-sm btn-outline-secondary">Export</a>
+                    <a href="{{ route('reports.export', ['report' => 'bundles']) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
                 </div>
                 <div class="card-body">
                     <ul class="list-group">
@@ -127,7 +127,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Recent Activity</h5>
-                    <a href="{{ route('reports.export', ['report' => 'activity']) }}" class="btn btn-sm btn-outline-secondary">Export</a>
+                    <a href="{{ route('reports.export', ['report' => 'activity']) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
                 </div>
                 <div class="table-container">
                     <table class="table">

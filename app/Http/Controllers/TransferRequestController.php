@@ -6,6 +6,7 @@ use App\Models\Evidence;
 use App\Models\TransferRequest;
 use App\Models\User;
 use App\Models\Institution;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -410,13 +411,12 @@ class TransferRequestController extends Controller
     }
 
     /**
-     * Export custody history (for legal proceedings)
+     * Export custody history as PDF (for legal proceedings)
      */
     public function exportCustodyHistory(Evidence $evidence)
     {
         $user = Auth::user();
 
-        // Only authorized roles can export
         if (!$user->hasPermissionTo('disclose-evidence')) {
             abort(403);
         }
@@ -426,32 +426,13 @@ class TransferRequestController extends Controller
             ->orderBy('transferred_at', 'asc')
             ->get();
 
-        $filename = "custody_history_exhibit_{$evidence->exhibit_number}_" . now()->format('YmdHis') . ".pdf";
+        $evidence->load('institution');
 
-        // For now, return CSV export - can be extended to PDF
-        $csv = "CUSTODY HISTORY REPORT\n";
-        $csv .= "Evidence: " . $evidence->exhibit_number . "\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= str_repeat("=", 120) . "\n\n";
-        
-        $csv .= "Transfer #,Date/Time,From Institution,From Officer,To Institution,To Officer,Reason,Reference,Status\n";
+        $filename = "custody_history_exhibit_{$evidence->exhibit_number}_" . now()->format('YmdHis') . '.pdf';
 
-        foreach ($custodyHistory as $index => $record) {
-            $csv .= sprintf(
-                "%d,%s,%s,%s,%s,%s,%s,%s,Transferred\n",
-                $index + 1,
-                $record->transferred_at?->format('Y-m-d H:i:s') ?? 'N/A',
-                $record->fromInstitution?->name ?? 'Unknown',
-                $record->fromUser?->name ?? 'Unknown',
-                $record->toInstitution?->name ?? 'Unknown',
-                $record->toUser?->name ?? 'Unknown',
-                $record->transfer_reason ?? 'N/A',
-                $record->transfer_reference ?? 'N/A'
-            );
-        }
+        $pdf = Pdf::loadView('exports.custody-history-pdf', compact('evidence', 'custodyHistory'))
+            ->setPaper('a4', 'landscape');
 
-        return response($csv)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
+        return $pdf->download($filename);
     }
 }

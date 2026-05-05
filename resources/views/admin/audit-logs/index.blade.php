@@ -10,7 +10,7 @@
         </div>
         <div class="col-md-6 text-end">
             <a href="{{ route('audit-logs.export', request()->query()) }}" class="btn btn-outline-primary">
-                <i class="bi bi-download me-2"></i>Export CSV
+                <i class="bi bi-file-earmark-pdf me-2"></i>Export PDF
             </a>
         </div>
     </div>

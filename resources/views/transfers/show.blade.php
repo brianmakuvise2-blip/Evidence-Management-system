@@ -268,7 +268,7 @@
                         </a>
                         @can('disclose-evidence')
                             <a href="{{ route('custody-history-export', $transfer->evidence) }}" class="btn btn-sm btn-outline-success" target="_blank">
-                                <i class="fas fa-download"></i> Export History
+                                <i class="fas fa-file-pdf"></i> Export PDF
                             </a>
                         @endcan
                     </div>

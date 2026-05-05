@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserActivityLog;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class AuditLogsController extends Controller
@@ -68,64 +69,35 @@ class AuditLogsController extends Controller
     }
 
     /**
-     * Export audit logs to CSV.
+     * Export audit logs as PDF.
      */
     public function export(Request $request)
     {
         $query = UserActivityLog::with('user');
 
-        // Apply same filters as index
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
         }
-
         if ($request->filled('action')) {
             $query->where('action', $request->action);
         }
-
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         $auditLogs = $query->latest()->get();
+        $filters   = $request->only(['user_id', 'action', 'status', 'date_from', 'date_to']);
+        $filename  = 'audit-logs-' . now()->format('Y-m-d-His') . '.pdf';
 
-        // Create CSV
-        $filename = 'audit-logs-' . now()->format('Y-m-d-His') . '.csv';
-        $headers = array(
-            "Content-type" => "text/csv; charset=UTF-8",
-            "Content-Disposition" => "attachment; filename=$filename",
-        );
+        $pdf = Pdf::loadView('exports.audit-logs-pdf', compact('auditLogs', 'filters'))
+            ->setPaper('a4', 'landscape');
 
-        $handle = fopen('php://output', 'w');
-        fputcsv($handle, ['Timestamp', 'User', 'Action', 'Status', 'IP Address', 'Details']);
-
-        foreach ($auditLogs as $log) {
-            fputcsv($handle, [
-                $log->created_at,
-                $log->user->name ?? 'Unknown',
-                $log->action,
-                $log->status,
-                $log->ip_address,
-                json_encode($log->details),
-            ]);
-        }
-
-        fclose($handle);
-
-        return response()->stream(
-            function () use ($handle) {
-                // Stream is already written
-            },
-            200,
-            $headers
-        );
+        return $pdf->download($filename);
     }
 }

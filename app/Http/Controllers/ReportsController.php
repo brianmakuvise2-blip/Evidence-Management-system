@@ -6,9 +6,9 @@ use App\Models\CourtBundle;
 use App\Models\Evidence;
 use App\Models\TransferRequest;
 use App\Models\UserActivityLog;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportsController extends Controller
 {
@@ -43,61 +43,62 @@ class ReportsController extends Controller
     }
 
     /**
-     * Export report data as CSV.
+     * Export report data as PDF.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request)
     {
         $reportType = $request->get('report', 'overview');
-        $fileName = sprintf('evidence-report-%s-%s.csv', $reportType, now()->format('YmdHis'));
+        $fileName   = sprintf('evidence-report-%s-%s.pdf', $reportType, now()->format('YmdHis'));
 
-        return response()->streamDownload(function () use ($reportType) {
-            $handle = fopen('php://output', 'w');
+        $titles = [
+            'overview'  => 'System Overview',
+            'evidence'  => 'Evidence Status',
+            'transfers' => 'Transfer Status',
+            'bundles'   => 'Bundle Status',
+            'activity'  => 'Recent Activity',
+        ];
+        $title = $titles[$reportType] ?? 'Report';
 
-            switch ($reportType) {
-                case 'evidence':
-                    fputcsv($handle, ['Status', 'Count']);
-                    foreach (Evidence::select('status', DB::raw('count(*) as count'))->groupBy('status')->pluck('count', 'status')->toArray() as $status => $count) {
-                        fputcsv($handle, [Evidence::getStatuses()[$status] ?? $status, $count]);
-                    }
-                    break;
-                case 'transfers':
-                    fputcsv($handle, ['Status', 'Count']);
-                    foreach (TransferRequest::select('status', DB::raw('count(*) as count'))->groupBy('status')->pluck('count', 'status')->toArray() as $status => $count) {
-                        fputcsv($handle, [TransferRequest::getStatuses()[$status] ?? $status, $count]);
-                    }
-                    break;
-                case 'bundles':
-                    fputcsv($handle, ['Status', 'Count']);
-                    foreach (CourtBundle::select('status', DB::raw('count(*) as count'))->groupBy('status')->pluck('count', 'status')->toArray() as $status => $count) {
-                        fputcsv($handle, [CourtBundle::getStatuses()[$status] ?? $status, $count]);
-                    }
-                    break;
-                case 'activity':
-                    fputcsv($handle, ['Date', 'User', 'Action', 'Description', 'Status']);
-                    foreach (UserActivityLog::with('user')->latest()->limit(100)->get() as $log) {
-                        fputcsv($handle, [
-                            $log->created_at->toDateTimeString(),
-                            $log->user->name ?? 'System',
-                            $log->action,
-                            $log->description,
-                            ucfirst($log->status),
-                        ]);
-                    }
-                    break;
-                default:
-                    fputcsv($handle, ['Metric', 'Value']);
-                    fputcsv($handle, ['Total Evidence', Evidence::count()]);
-                    fputcsv($handle, ['Verified Evidence', Evidence::where('status', Evidence::STATUS_VERIFIED)->count()]);
-                    fputcsv($handle, ['Transferred Evidence', Evidence::where('status', Evidence::STATUS_TRANSFERRED)->count()]);
-                    fputcsv($handle, ['Disclosed Evidence', Evidence::where('status', Evidence::STATUS_DISCLOSED)->count()]);
-                    fputcsv($handle, ['Pending Transfers', TransferRequest::where('status', TransferRequest::STATUS_PENDING)->count()]);
-                    fputcsv($handle, ['Approved Bundles', CourtBundle::where('status', CourtBundle::STATUS_APPROVED)->count()]);
-                    break;
-            }
+        $rows = match ($reportType) {
+            'evidence' => collect(
+                Evidence::select('status', DB::raw('count(*) as count'))
+                    ->groupBy('status')->pluck('count', 'status')->toArray()
+            )->map(fn($c, $s) => [Evidence::getStatuses()[$s] ?? $s, $c])->values()->toArray(),
 
-            fclose($handle);
-        }, $fileName, [
-            'Content-Type' => 'text/csv',
-        ]);
+            'transfers' => collect(
+                TransferRequest::select('status', DB::raw('count(*) as count'))
+                    ->groupBy('status')->pluck('count', 'status')->toArray()
+            )->map(fn($c, $s) => [TransferRequest::getStatuses()[$s] ?? $s, $c])->values()->toArray(),
+
+            'bundles' => collect(
+                CourtBundle::select('status', DB::raw('count(*) as count'))
+                    ->groupBy('status')->pluck('count', 'status')->toArray()
+            )->map(fn($c, $s) => [CourtBundle::getStatuses()[$s] ?? $s, $c])->values()->toArray(),
+
+            'activity' => UserActivityLog::with('user')->latest()->limit(100)->get()
+                ->map(fn($log) => [
+                    $log->created_at->toDateTimeString(),
+                    $log->user->name ?? 'System',
+                    $log->action,
+                    $log->description ?? '—',
+                    ucfirst($log->status),
+                ])->toArray(),
+
+            default => [
+                ['Total Evidence',      Evidence::count()],
+                ['Verified Evidence',   Evidence::where('status', Evidence::STATUS_VERIFIED)->count()],
+                ['Transferred Evidence',Evidence::where('status', Evidence::STATUS_TRANSFERRED)->count()],
+                ['Disclosed Evidence',  Evidence::where('status', Evidence::STATUS_DISCLOSED)->count()],
+                ['Pending Transfers',   TransferRequest::where('status', TransferRequest::STATUS_PENDING)->count()],
+                ['Approved Bundles',    CourtBundle::where('status', CourtBundle::STATUS_APPROVED)->count()],
+            ],
+        };
+
+        $orientation = $reportType === 'activity' ? 'landscape' : 'portrait';
+
+        $pdf = Pdf::loadView('exports.reports-pdf', compact('reportType', 'title', 'rows'))
+            ->setPaper('a4', $orientation);
+
+        return $pdf->download($fileName);
     }
 }
