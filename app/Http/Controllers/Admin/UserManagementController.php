@@ -125,7 +125,8 @@ class UserManagementController extends Controller
                     'password_expires_at' => now()->addDays(90), // Password expires in 90 days
                 ]);
 
-                $user->syncRoles($request->roles);
+                $roles = Role::whereIn('id', $request->roles)->get();
+                $user->syncRoles($roles);
 
                 return $user;
             });
@@ -214,7 +215,8 @@ class UserManagementController extends Controller
             ]));
 
             if ($request->has('roles')) {
-                $user->syncRoles($request->roles);
+                $roles = Role::whereIn('id', $request->roles)->get();
+                $user->syncRoles($roles);
             }
 
             $user->logActivity('user_updated', 'success', [
