@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserActivityLog;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 
 class AuditLogsController extends Controller
@@ -95,9 +95,33 @@ class AuditLogsController extends Controller
         $filters   = $request->only(['user_id', 'action', 'status', 'date_from', 'date_to']);
         $filename  = 'audit-logs-' . now()->format('Y-m-d-His') . '.pdf';
 
-        $pdf = Pdf::loadView('exports.audit-logs-pdf', compact('auditLogs', 'filters'))
-            ->setPaper('a4', 'landscape');
+        $filterDesc = collect($filters)->filter()->map(fn($v, $k) => "$k: $v")->implode(' | ');
+        $subtitle   = 'Generated ' . now()->format('d M Y, H:i') . ($filterDesc ? '  |  ' . $filterDesc : '');
 
-        return $pdf->download($filename);
+        $columns = [
+            ['label' => 'Timestamp',   'width' => 90],
+            ['label' => 'User',        'width' => 85],
+            ['label' => 'Action',      'width' => 95],
+            ['label' => 'Status',      'width' => 55],
+            ['label' => 'IP Address',  'width' => 72],
+            ['label' => 'Details',     'width' => 133],
+        ];
+
+        $rows = $auditLogs->map(fn($log) => [
+            $log->created_at->format('Y-m-d H:i:s'),
+            $log->user->name ?? 'Unknown',
+            str_replace('_', ' ', $log->action),
+            ucfirst($log->status),
+            $log->ip_address ?? '—',
+            is_array($log->details)
+                ? collect($log->details)->map(fn($v, $k) => "$k: $v")->implode(', ')
+                : (string) $log->details,
+        ])->toArray();
+
+        $pdf = (new PdfService())->build('Audit Logs Report', $subtitle, $columns, $rows, landscape: true);
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
     }
 }

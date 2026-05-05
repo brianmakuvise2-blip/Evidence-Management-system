@@ -6,7 +6,7 @@ use App\Models\Evidence;
 use App\Models\TransferRequest;
 use App\Models\User;
 use App\Models\Institution;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -430,9 +430,36 @@ class TransferRequestController extends Controller
 
         $filename = "custody_history_exhibit_{$evidence->exhibit_number}_" . now()->format('YmdHis') . '.pdf';
 
-        $pdf = Pdf::loadView('exports.custody-history-pdf', compact('evidence', 'custodyHistory'))
-            ->setPaper('a4', 'landscape');
+        $subtitle = implode('  |  ', array_filter([
+            'Exhibit: ' . $evidence->exhibit_number,
+            $evidence->case_reference ? 'Case: ' . $evidence->case_reference : null,
+            'Generated: ' . now()->format('d M Y, H:i'),
+        ]));
 
-        return $pdf->download($filename);
+        $columns = [
+            ['label' => '#',                 'width' => 22],
+            ['label' => 'Date & Time',       'width' => 78],
+            ['label' => 'From Institution',  'width' => 105],
+            ['label' => 'From Officer',      'width' => 88],
+            ['label' => 'To Institution',    'width' => 105],
+            ['label' => 'To Officer',        'width' => 88],
+            ['label' => 'Reason / Reference','width' => 114],
+        ];
+
+        $rows = $custodyHistory->map(fn($r, $i) => [
+            $i + 1,
+            $r->transferred_at?->format('Y-m-d H:i') ?? 'N/A',
+            $r->fromInstitution?->name ?? 'Unknown',
+            $r->fromUser?->name ?? 'Unknown',
+            $r->toInstitution?->name ?? 'Unknown',
+            $r->toUser?->name ?? 'Unknown',
+            trim(($r->transfer_reason ?? 'N/A') . ($r->transfer_reference ? ' [' . $r->transfer_reference . ']' : '')),
+        ])->toArray();
+
+        $pdf = (new PdfService())->build('Chain of Custody Report', $subtitle, $columns, $rows, landscape: true);
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
     }
 }

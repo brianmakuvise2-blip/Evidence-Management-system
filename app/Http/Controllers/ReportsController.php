@@ -6,7 +6,7 @@ use App\Models\CourtBundle;
 use App\Models\Evidence;
 use App\Models\TransferRequest;
 use App\Models\UserActivityLog;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -94,11 +94,26 @@ class ReportsController extends Controller
             ],
         };
 
-        $orientation = $reportType === 'activity' ? 'landscape' : 'portrait';
+        $landscape = $reportType === 'activity';
+        $subtitle  = 'Generated ' . now()->format('d M Y, H:i');
 
-        $pdf = Pdf::loadView('exports.reports-pdf', compact('reportType', 'title', 'rows'))
-            ->setPaper('a4', $orientation);
+        $columns = $landscape
+            ? [
+                ['label' => 'Date & Time',   'width' => 80],
+                ['label' => 'User',          'width' => 80],
+                ['label' => 'Action',        'width' => 85],
+                ['label' => 'Description',   'width' => 130],
+                ['label' => 'Status',        'width' => 55],
+              ]
+            : [
+                ['label' => 'Metric / Status', 'width' => 260],
+                ['label' => 'Value / Count',   'width' => 100],
+              ];
 
-        return $pdf->download($fileName);
+        $pdf = (new PdfService())->build($title, $subtitle, $columns, $rows, $landscape);
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"$fileName\"");
     }
 }
