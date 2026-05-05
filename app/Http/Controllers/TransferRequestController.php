@@ -98,15 +98,14 @@ class TransferRequestController extends Controller
             'urgency_level' => 'required|in:low,medium,high,critical',
         ]);
 
-        // Check if receiving officer is from destination institution
+        // Check if receiving officer is from destination institution and is active
         $receivingOfficer = User::findOrFail($validated['receiving_officer_id']);
         if ($receivingOfficer->institution_id != $validated['destination_institution_id']) {
             return back()->withErrors(['receiving_officer_id' => 'Selected officer is not from the destination institution.']);
         }
 
-        // Check if receiving officer has appropriate permissions
-        if (!$receivingOfficer->hasPermissionTo('acknowledge-receipt')) {
-            return back()->withErrors(['receiving_officer_id' => 'Selected officer cannot receive transfers.']);
+        if ($receivingOfficer->account_status !== 'active') {
+            return back()->withErrors(['receiving_officer_id' => 'Selected officer account is not active.']);
         }
 
         // Check evidence exists and belongs to user's institution

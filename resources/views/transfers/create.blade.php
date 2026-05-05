@@ -64,7 +64,7 @@
                             <label for="destination_institution_id" class="form-label">
                                 <i class="fas fa-building"></i> Destination Institution <span class="text-danger">*</span>
                             </label>
-                            <select name="destination_institution_id" id="destination_institution_id" class="form-select @error('destination_institution_id') is-invalid @enderror" required onchange="loadReceivingOfficers()">
+                            <select name="destination_institution_id" id="destination_institution_id" class="form-select @error('destination_institution_id') is-invalid @enderror" required onchange="loadReceivingOfficers(null)">
                                 <option value="">-- Select Destination Institution --</option>
                                 @foreach($institutions as $institution)
                                     <option value="{{ $institution->id }}" {{ old('destination_institution_id') == $institution->id ? 'selected' : '' }}>
@@ -139,7 +139,7 @@
 </div>
 
 <script>
-function loadReceivingOfficers() {
+function loadReceivingOfficers(preselectedOfficerId) {
     const institutionId = document.getElementById('destination_institution_id').value;
     const selectElement = document.getElementById('receiving_officer_id');
 
@@ -148,15 +148,23 @@ function loadReceivingOfficers() {
         return;
     }
 
-    // Fetch officers from the selected institution
+    selectElement.innerHTML = '<option value="">Loading officers...</option>';
+
     fetch(`/api/institutions/${institutionId}/officers`)
         .then(response => response.json())
         .then(data => {
             selectElement.innerHTML = '<option value="">-- Select Receiving Officer --</option>';
+            if (data.length === 0) {
+                selectElement.innerHTML = '<option value="" disabled>No active officers at this institution</option>';
+                return;
+            }
             data.forEach(officer => {
                 const option = document.createElement('option');
                 option.value = officer.id;
                 option.textContent = `${officer.name} (${officer.department})`;
+                if (preselectedOfficerId && officer.id == preselectedOfficerId) {
+                    option.selected = true;
+                }
                 selectElement.appendChild(option);
             });
         })
@@ -165,5 +173,14 @@ function loadReceivingOfficers() {
             selectElement.innerHTML = '<option value="">Error loading officers</option>';
         });
 }
+
+// Restore selections when form returns with validation errors
+@if(old('destination_institution_id'))
+    document.addEventListener('DOMContentLoaded', function () {
+        const institutionSelect = document.getElementById('destination_institution_id');
+        institutionSelect.value = '{{ old('destination_institution_id') }}';
+        loadReceivingOfficers('{{ old('receiving_officer_id') }}');
+    });
+@endif
 </script>
 @endsection

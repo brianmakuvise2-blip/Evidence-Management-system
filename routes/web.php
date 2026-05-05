@@ -233,10 +233,10 @@ Route::prefix('api')->group(function () {
         return $institution->departments()->select('id', 'name', 'code')->get();
     });
 
-    // Get officers (users authorized to receive transfers) by institution
+    // Get active officers from a destination institution for transfer selection
     Route::get('/institutions/{institution}/officers', function (\App\Models\Institution $institution) {
-        return \App\Models\User::permission('acknowledge-receipt')
-            ->where('institution_id', $institution->id)
+        return \App\Models\User::where('institution_id', $institution->id)
+            ->where('account_status', 'active')
             ->with('department:id,name')
             ->get()
             ->map(function ($user) {
